@@ -1,1045 +1,425 @@
 <!DOCTYPE html>
-<html lang="hi">
+<html lang="en">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>AI Map Explorer</title>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gemini AI Chat</title>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
-    :root {
-      --bg:#0d1117; --nav-bg:rgba(13,17,23,0.97); --surface:#161b27; --surface2:#1e2535;
-      --border:rgba(255,255,255,0.09); --text:#e6eaf3; --muted:#7986a0;
-      --river:#38bdf8; --forest:#4ade80; --mountain:#a78bfa; --desert:#fbbf24; --orange:#f97316;
-      --nav-h:52px; --bottom-h:68px;
-    }
-    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;height:100dvh;}
+    :root { --primary: #2563eb; --study: #8b5cf6; --bg-color: #f8fafc; --border-color: #e2e8f0; --text-main: #1e293b; --text-muted: #64748b; }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: var(--bg-color); height: 100vh; height: 100dvh; overflow: hidden; color: var(--text-main); }
 
-    /* ════ TOP NAV ════ */
-    .top-nav{
-      position:fixed;top:0;left:0;right:0;height:var(--nav-h);
-      background:var(--nav-bg);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);
-      display:flex;align-items:center;gap:8px;padding:0 12px;z-index:5000;
-    }
-    .logo{
-      font-family:'Syne',sans-serif;font-weight:800;font-size:15px;
-      background:linear-gradient(90deg,#38bdf8,#818cf8);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;flex-shrink:0;
-    }
-    .nav-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+    /* Header */
+    .header { background: #fff; border-bottom: 1px solid var(--border-color); padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 10; transition: all 0.3s ease; }
+    .header.compact { padding: 6px 16px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .header h2 { font-size: 1.2rem; font-weight: 600; color: #1e40af; margin: 0; }
+    
+    .header-right { display: flex; align-items: center; }
+    .top-scan-btn { font-size: 1.4rem; cursor: pointer; padding: 6px; border-radius: 50%; display: flex; align-items: center; justify-content: center; transition: background 0.2s; background: #f1f5f9; border: 1px solid #e2e8f0; }
+    .top-scan-btn:hover { background: #e2e8f0; }
+    
+    .mobile-menu-btn { display: none; background: none; border: none; font-size: 1.5rem; color: var(--text-main); cursor: pointer; padding: 0 5px; }
 
-    .filter-btn{
-      flex-shrink:0;display:flex;align-items:center;gap:6px;
-      font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
-      padding:6px 12px;border-radius:20px;border:1px solid var(--border);
-      background:var(--surface2);color:var(--text);cursor:pointer;transition:all .2s;white-space:nowrap;
-    }
-    .filter-arrow{font-size:10px;color:var(--muted);transition:transform .2s;margin-left:2px;}
-    .filter-btn.open .filter-arrow{transform:rotate(180deg);}
+    .main { display: flex; height: calc(100dvh - 58px); transition: height 0.3s ease; }
+    .header.compact ~ .main { height: calc(100dvh - 46px); }
+    
+    /* Sidebar */
+    .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; transition: left 0.3s ease; z-index: 20; }
+    .close-sidebar-btn { display: none; padding: 12px; background: #f8fafc; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-weight: 600; cursor: pointer; border: none; text-align: left; font-size: 0.95rem; }
+    
+    .sidebar-btns { display: flex; gap: 8px; padding: 12px; border-bottom: 1px solid var(--border-color); }
+    .btn-new, .btn-study { flex: 1; padding: 8px; border: none; border-radius: 6px; font-weight: 600; font-size: 0.85rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; }
+    .btn-new { background: var(--primary); color: white; }
+    .btn-study { background: var(--study); color: white; }
+    
+    .chat-list { flex: 1; overflow-y: auto; padding: 8px; }
+    
+    /* Dropdown Styles */
+    .study-group { background: #f3f4f6; border-radius: 8px; margin-bottom: 8px; overflow: hidden; border: 1px solid #d1d5db; }
+    .study-header-container { display: flex; background: #e5e7eb; }
+    .study-header-text { flex: 1; padding: 10px; font-weight: 600; cursor: pointer; color: var(--study); font-size: 0.85rem;}
+    .study-toggle { padding: 10px; cursor: pointer; color: var(--text-muted); border-left: 1px solid #d1d5db; font-size: 0.85rem; }
+    .study-items { display: none; flex-direction: column; }
+    .study-items.open { display: flex; }
+    .study-q-item { padding: 8px 10px; font-size: 0.8rem; border-bottom: 1px solid #e5e7eb; cursor: pointer; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 
-    .show-all-btn{
-      flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;
-      padding:5px 12px;border-radius:16px;border:1.5px solid var(--orange);
-      background:rgba(249,115,22,.1);color:var(--orange);cursor:pointer;transition:all .2s;white-space:nowrap;
-    }
-    .show-all-btn:hover,.show-all-btn.active{background:var(--orange);color:#000;}
+    /* Chat Area */
+    .chat-area { flex: 1; display: flex; flex-direction: column; background: var(--bg-color); min-width: 0; }
+    .messages { flex: 1; padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 14px; scroll-behavior: smooth; }
+    .message-wrapper { display: flex; flex-direction: column; max-width: 85%; }
+    .message-wrapper.user { align-self: flex-end; align-items: flex-end; }
+    .message-wrapper.assistant { align-self: flex-start; align-items: flex-start; }
+    
+    .message { padding: 10px 14px; line-height: 1.5; font-size: 0.95rem; word-wrap: break-word; overflow-wrap: break-word; }
+    .user .message { background: var(--primary); color: white; border-radius: 16px 16px 4px 16px; }
+    .assistant .message { background: white; border: 1px solid var(--border-color); border-radius: 16px 16px 16px 4px; box-shadow: 0 1px 2px rgba(0,0,0,0.02); }
+    
+    .msg-attachments { display: flex; gap: 6px; margin-bottom: 8px; flex-wrap: wrap; }
+    .msg-thumb { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; border: 1px solid rgba(255,255,255,0.4); }
+    .msg-file-icon { background: rgba(0,0,0,0.2); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem; color: white; display: flex; align-items: center; }
 
-    /* Desktop nav strip — scrollable */
-    .nav-items{
-      display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none;white-space:nowrap;align-items:center;
-    }
-    .nav-items::-webkit-scrollbar{display:none;}
-    .nav-item-btn{
-      flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;
-      padding:5px 12px;border-radius:16px;border:1px solid var(--border);
-      background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;touch-action:manipulation;
-    }
-    .nav-item-btn:hover{color:var(--text);border-color:rgba(255,255,255,.18);}
-    .nav-item-btn.active{color:#000;font-weight:700;}
-    .nav-item-btn.c-river{background:var(--river);border-color:var(--river);}
-    .nav-item-btn.c-forest{background:var(--forest);border-color:var(--forest);}
-    .nav-item-btn.c-mountain{background:var(--mountain);border-color:var(--mountain);}
-    .nav-item-btn.c-desert{background:var(--desert);border-color:var(--desert);}
-    .nav-item-btn.ai-result{border-style:dashed;}
-    .ai-section-label{
-      flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:1px;
-      text-transform:uppercase;color:var(--muted);padding:0 4px;white-space:nowrap;
-    }
+    .message p { margin-bottom: 8px; }
+    .message p:last-child { margin-bottom: 0; }
+    .message pre { background: #1e293b; color: #f8fafc; padding: 10px; border-radius: 8px; overflow-x: auto; margin: 8px 0; font-size: 0.85rem; }
+    .message code { font-family: monospace; background: rgba(0,0,0,0.1); padding: 2px 4px; border-radius: 4px; }
+    .message pre code { background: none; padding: 0; }
+    
+    /* Input Area */
+    .input-container { padding: 12px; background: white; border-top: 1px solid var(--border-color); flex-shrink: 0; }
+    .input-wrapper { background: white; border: 1px solid var(--border-color); border-radius: 20px; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 1px 4px rgba(0,0,0,0.05);}
+    .attachment-preview { display: none; padding: 10px; border-bottom: 1px solid var(--border-color); background: #f8fafc; gap: 8px; flex-wrap: wrap; }
+    .preview-item { position: relative; }
+    .preview-item img { width: 45px; height: 45px; border-radius: 6px; object-fit: cover; border: 1px solid var(--border-color);}
+    
+    .input-row { display: flex; align-items: center; padding: 6px 12px; gap: 8px; }
+    .icon-btn { width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 50%; cursor: pointer; color: var(--text-muted); font-size: 1.1rem; transition: background 0.2s; }
+    .icon-btn:hover { background: #f1f5f9; }
+    .input-row input { flex: 1; border: none; outline: none; padding: 8px; font-size: 0.95rem; min-width: 0; background: transparent; }
+    .send-btn { width: 36px; height: 36px; background: var(--primary); color: white; border: none; border-radius: 50%; cursor: pointer; display:flex; align-items:center; justify-content:center; }
+    
+    .mode-indicator { font-size: 0.75rem; padding: 4px 8px; border-radius: 12px; background: #e2e8f0; margin-left:10px; white-space: nowrap;}
+    .mode-indicator.study { background: #ede9fe; color: #6d28d9; font-weight:bold;}
 
-    /* ════ FILTER POPUP ════ */
-    .filter-popup{
-      position:fixed;top:58px;left:12px;background:var(--surface);border:1px solid var(--border);
-      border-radius:14px;padding:10px 8px;z-index:6000;box-shadow:0 20px 50px rgba(0,0,0,.55);
-      display:none;flex-direction:column;gap:4px;min-width:185px;animation:popIn .18s ease;
-    }
-    @keyframes popIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
-    .filter-popup.open{display:flex;}
-    .fp-title{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);padding:4px 10px 6px;}
-    .fp-option{
-      display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;
-      font-size:14px;font-weight:500;color:var(--text);cursor:pointer;transition:background .15s;
-      border:none;background:transparent;text-align:left;touch-action:manipulation;
-    }
-    .fp-option:hover,.fp-option:active{background:var(--surface2);}
-    .fp-check{font-size:12px;margin-left:auto;opacity:0;}
-    .fp-option.selected .fp-check{opacity:1;}
-    .fp-option.selected.r{color:var(--river);}
-    .fp-option.selected.f{color:var(--forest);}
-    .fp-option.selected.m{color:var(--mountain);}
-    .fp-option.selected.d{color:var(--desert);}
+    /* 📸 LIVE CAMERA MODAL CSS */
+    .camera-modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.9); z-index: 100; flex-direction: column; justify-content: center; align-items: center; }
+    .camera-container { width: 90%; max-width: 500px; background: white; border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 12px; align-items: center; }
+    #videoElement { width: 100%; border-radius: 8px; background: black; }
+    #canvasElement { display: none; }
+    .cam-controls { display: flex; gap: 10px; width: 100%; }
+    .cam-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    .btn-capture { background: var(--primary); color: white; }
+    .btn-cancel { background: #ef4444; color: white; }
 
-    /* ════ MAP ════ */
-    #map{
-      position:fixed;top:var(--nav-h);left:0;right:0;z-index:1;
-      bottom:0;
-    }
-
-    /* ════ DESKTOP INFO CARD ════ */
-    .info-card{
-      position:fixed;bottom:24px;right:24px;
-      background:rgba(18,23,35,0.97);border:1px solid var(--border);
-      backdrop-filter:blur(16px);border-radius:12px;padding:11px 14px 12px;
-      z-index:4000;display:none;width:215px;
-      cursor:grab;user-select:none;
-      box-shadow:0 10px 32px rgba(0,0,0,.6);animation:cardIn .2s ease;
-    }
-    @keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
-    .info-card:active{cursor:grabbing;}
-    .ic-top{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
-    .ic-badge{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
-    .ic-close{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;margin-left:auto;line-height:1;padding:2px 4px;}
-    .ic-close:hover{color:var(--text);}
-    .ic-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:7px;line-height:1.3;}
-    .ic-rows{display:flex;flex-direction:column;gap:5px;}
-    .ic-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
-    .ic-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);flex-shrink:0;white-space:nowrap;}
-    .ic-val{font-size:11px;color:var(--text);font-weight:500;text-align:right;line-height:1.3;word-break:break-word;}
-
-    /* ════ MOBILE BOTTOM BAR — redesigned ════ */
-    .mobile-bottom-bar{
-      display:none;
-      position:fixed;bottom:0;left:0;right:0;
-      height:var(--bottom-h);
-      background:var(--nav-bg);border-top:1px solid var(--border);backdrop-filter:blur(14px);
-      z-index:5000;
-      flex-direction:column;
-      padding:0;
-    }
-
-    /* Top row: filter + show all + list + AI button */
-    .mbb-top-row{
-      display:flex;align-items:center;gap:8px;
-      padding:8px 12px 0;
-      flex:1;
-    }
-
-    /* Bottom row: scrollable item names */
-    .mbb-scroll-row{
-      display:flex;align-items:center;gap:6px;
-      padding:4px 12px 8px;
-      overflow-x:auto;scrollbar-width:none;
-    }
-    .mbb-scroll-row::-webkit-scrollbar{display:none;}
-
-    .mbb-item-pill{
-      flex-shrink:0;
-      display:flex;align-items:center;gap:5px;
-      font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;
-      padding:3px 10px;border-radius:12px;border:1px solid var(--border);
-      background:var(--surface2);color:var(--muted);cursor:pointer;
-      transition:all .2s;touch-action:manipulation;white-space:nowrap;
-    }
-    .mbb-item-pill.active-pill{color:#000;}
-    .mbb-item-pill.ai-pill{border-style:dashed;border-color:rgba(56,189,248,.4);color:#38bdf8;background:rgba(56,189,248,.08);}
-    .mbb-item-pill.ai-pill.active-pill{background:#38bdf8;color:#000;border-style:solid;}
-    .mbb-pill-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
-    .mbb-pill-close{
-      font-size:13px;line-height:1;margin-left:2px;opacity:.6;
-      background:none;border:none;color:inherit;cursor:pointer;padding:0;
-    }
-
-    .mbb-show-btn{
-      flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;
-      padding:5px 10px;border-radius:12px;border:1.5px solid var(--orange);
-      background:rgba(249,115,22,.1);color:var(--orange);cursor:pointer;transition:all .2s;
-      white-space:nowrap;touch-action:manipulation;
-    }
-    .mbb-show-btn.active{background:var(--orange);color:#000;}
-
-    .mbb-list-btn{
-      font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;
-      padding:5px 12px;border-radius:12px;border:1px solid var(--border);
-      background:var(--surface2);color:var(--muted);cursor:pointer;
-      touch-action:manipulation;white-space:nowrap;
-    }
-
-    /* AI button — right side, slightly lifted */
-    .mbb-ai-btn{
-      margin-left:auto;flex-shrink:0;
-      height:36px;padding:0 14px;border-radius:18px;
-      background:linear-gradient(135deg,#38bdf8,#818cf8);
-      display:flex;align-items:center;gap:5px;
-      font-family:'Syne',sans-serif;font-weight:700;font-size:12px;
-      cursor:pointer;border:none;color:#000;
-      box-shadow:0 4px 14px rgba(56,189,248,.35);
-      touch-action:manipulation;
-      position:relative;
-      transform:translateY(-2px);
-    }
-    .mbb-ai-btn .ai-sparkle{font-size:13px;}
-
-    /* Active item name chip in bottom bar */
-    .mbb-active-chip{
-      display:none;
-      align-items:center;gap:6px;
-      font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
-      padding:4px 10px;border-radius:12px;
-      background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);
-      color:#38bdf8;white-space:nowrap;flex-shrink:0;
-    }
-    .mbb-active-chip.show{display:flex;}
-    .mac-eye{font-size:12px;}
-    .mac-name{max-width:120px;overflow:hidden;text-overflow:ellipsis;}
-    .mac-close{background:none;border:none;color:#38bdf8;font-size:15px;cursor:pointer;padding:0;margin-left:2px;opacity:.7;}
-    .mac-close:hover{opacity:1;}
-
-    /* ════ MOBILE BOTTOM SHEET ════ */
-    .mob-sheet-overlay{
-      display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:6500;
-    }
-    .mob-sheet-overlay.open{display:block;}
-    .mob-sheet{
-      position:fixed;bottom:0;left:0;right:0;z-index:6600;
-      background:var(--surface);border-radius:20px 20px 0 0;
-      border-top:1px solid var(--border);
-      max-height:60vh;display:flex;flex-direction:column;
-      transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.2,1);
-    }
-    .mob-sheet.open{transform:translateY(0);}
-    .mob-sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;flex-shrink:0;}
-    .mob-sheet-head{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:10px 16px 8px;flex-shrink:0;
-    }
-    .mob-sheet-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
-    .mob-sheet-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
-    .mob-sheet-body{overflow-y:auto;padding:0 12px 24px;flex:1;}
-    .mob-sheet-body::-webkit-scrollbar{display:none;}
-    .mob-item{
-      display:flex;align-items:center;gap:12px;
-      padding:12px 8px;border-radius:10px;cursor:pointer;
-      border-bottom:1px solid var(--border);transition:background .15s;
-      touch-action:manipulation;
-    }
-    .mob-item:last-child{border-bottom:none;}
-    .mob-item:active{background:var(--surface2);}
-    .mob-item-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
-    .mob-item-name{font-size:14px;font-weight:600;color:var(--text);}
-    .mob-item-sub{font-size:11px;color:var(--muted);margin-top:1px;}
-    .mob-item-arrow{margin-left:auto;color:var(--muted);font-size:14px;}
-    .mob-section-label{
-      font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
-      color:var(--muted);padding:12px 8px 4px;
-    }
-
-    /* ════ MOBILE INFO PANEL ════ */
-    .mob-info-panel{
-      position:fixed;bottom:var(--bottom-h);left:0;right:0;z-index:4500;
-      background:rgba(18,23,35,0.98);border-top:1px solid var(--border);
-      border-radius:16px 16px 0 0;backdrop-filter:blur(16px);
-      padding:12px 16px 14px;
-      display:none;animation:slideUpPanel .22s ease;
-    }
-    @keyframes slideUpPanel{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
-    .mip-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
-    .mip-badge{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:4px;}
-    .mip-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;margin-left:auto;padding:2px 6px;}
-    .mip-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:10px;}
-    .mip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-    .mip-item{display:flex;flex-direction:column;gap:2px;}
-    .mip-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
-    .mip-val{font-size:12px;color:var(--text);font-weight:500;line-height:1.3;}
-
-    /* ════ DESKTOP AI FAB ════ */
-    .ai-fab{
-      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-      height:40px;padding:0 20px;border-radius:20px;
-      background:linear-gradient(135deg,#38bdf8,#818cf8);
-      display:flex;align-items:center;gap:7px;
-      font-family:'Syne',sans-serif;font-weight:700;font-size:13px;
-      cursor:pointer;z-index:4500;
-      box-shadow:0 6px 20px rgba(56,189,248,.35);
-      transition:transform .2s,box-shadow .2s;border:none;color:#000;
-    }
-    .ai-fab:hover{transform:translateX(-50%) scale(1.06);box-shadow:0 10px 28px rgba(56,189,248,.5);}
-
-    /* ════ SEARCH MODAL ════ */
-    .search-overlay{
-      position:fixed;inset:0;background:rgba(0,0,0,.72);
-      backdrop-filter:blur(6px);z-index:7000;
-      display:none;align-items:flex-end;justify-content:center;
-    }
-    .search-overlay.open{display:flex;}
-    .search-modal{
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:18px 18px 0 0;padding:20px 20px 32px;width:100%;max-width:560px;
-      box-shadow:0 -20px 60px rgba(0,0,0,.5);animation:slideUpModal .22s ease;
-    }
-    @keyframes slideUpModal{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-    .sm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
-    .sm-head h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;}
-    .sm-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px;}
-    .sm-sub{font-size:13px;color:var(--muted);margin-bottom:10px;}
-    .cache-notice{
-      font-size:11px;color:var(--muted);margin-bottom:12px;
-      padding:7px 11px;background:rgba(56,189,248,.07);
-      border-radius:8px;border:1px solid rgba(56,189,248,.15);
-    }
-    .cache-notice span{color:#38bdf8;font-weight:700;}
-    .sm-row{display:flex;gap:8px;margin-bottom:12px;}
-    .sm-input{
-      flex:1;background:var(--surface2);border:1px solid var(--border);
-      border-radius:10px;padding:12px 14px;
-      font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color .2s;
-    }
-    .sm-input:focus{border-color:rgba(56,189,248,.5);}
-    .sm-input::placeholder{color:var(--muted);}
-    .sm-go{
-      font-family:'Syne',sans-serif;font-weight:700;font-size:14px;
-      padding:12px 18px;border:none;border-radius:10px;
-      background:linear-gradient(135deg,#38bdf8,#818cf8);
-      color:#000;cursor:pointer;transition:opacity .2s;white-space:nowrap;
-      touch-action:manipulation;
-    }
-    .sm-go:hover{opacity:.85;}
-    .sm-chips{display:flex;flex-wrap:wrap;gap:7px;}
-    .sm-chip{
-      font-size:12px;padding:6px 12px;border-radius:11px;
-      border:1px solid var(--border);background:var(--surface2);color:var(--muted);
-      cursor:pointer;transition:all .18s;touch-action:manipulation;
-    }
-    .sm-chip:active{color:var(--text);border-color:rgba(255,255,255,.2);}
-
-    /* ════ MISC ════ */
-    .loading-bar{
-      position:fixed;top:0;left:0;right:0;height:3px;
-      background:linear-gradient(90deg,#38bdf8,#818cf8,#4ade80);
-      background-size:200% 100%;z-index:9999;display:none;
-      animation:shimmer 1.2s linear infinite;
-    }
-    @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
-    .river-flow{stroke-dasharray:14 10;animation:flow 1.6s linear infinite;}
-    @keyframes flow{from{stroke-dashoffset:48}to{stroke-dashoffset:0}}
-    .toast{
-      position:fixed;top:60px;right:12px;
-      background:var(--surface);border:1px solid var(--border);
-      border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text);
-      z-index:8000;display:none;box-shadow:0 10px 30px rgba(0,0,0,.4);
-      max-width:260px;animation:slideInR .25s ease;
-    }
-    @keyframes slideInR{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
-    .toast.show{display:block;}
-    .click-away{position:fixed;inset:0;z-index:5500;display:none;}
-    .click-away.on{display:block;}
-
-    /* ════ MOBILE OVERRIDES ════ */
-    @media(max-width:640px){
-      .nav-items,.show-all-btn,.nav-sep:last-of-type,.ai-fab{display:none!important;}
-      .mobile-bottom-bar{display:flex;}
-      #map{bottom:var(--bottom-h);}
-      .info-card{display:none!important;}
-      .filter-popup{top:58px;}
-    }
-    @media(min-width:641px){
-      .mobile-bottom-bar,.mob-sheet-overlay,.mob-sheet,.mob-info-panel{display:none!important;}
+    @media (max-width: 768px) {
+      .mobile-menu-btn { display: block; }
+      .mode-indicator { display: none; } 
+      .header h2 { font-size: 1.1rem; }
+      .sidebar { position: absolute; left: -260px; top: 0; height: 100dvh; width: 250px; box-shadow: 4px 0 15px rgba(0,0,0,0.1); }
+      .sidebar.open { left: 0; }
+      .close-sidebar-btn { display: block; }
+      .message-wrapper { max-width: 95%; }
+      .input-container { padding: 8px; }
     }
   </style>
 </head>
 <body>
 
-<div class="loading-bar" id="loadingBar"></div>
-
-<!-- ════ TOP NAV ════ -->
-<div class="top-nav">
-  <div class="logo">🌐 AI Map</div>
-  <div class="nav-sep"></div>
-  <button class="filter-btn" id="filterBtn" onclick="toggleFilter()">
-    <span id="filterIcon">🌊</span>
-    <span id="filterLabel">Rivers</span>
-    <span class="filter-arrow">▼</span>
-  </button>
-  <button class="show-all-btn" id="showAllBtn" onclick="toggleAll()">Show All</button>
-  <div class="nav-sep"></div>
-  <!-- Scrollable nav strip — all items here left to right -->
-  <div class="nav-items" id="navItems"></div>
-</div>
-
-<!-- ════ FILTER POPUP ════ -->
-<div class="filter-popup" id="filterPopup">
-  <div class="fp-title">Map Layer</div>
-  <button class="fp-option selected r" data-cat="rivers"    onclick="selectCategory('rivers',this)">🌊 Rivers    <span class="fp-check">✓</span></button>
-  <button class="fp-option f"          data-cat="forests"   onclick="selectCategory('forests',this)">🌲 Forests   <span class="fp-check">✓</span></button>
-  <button class="fp-option m"          data-cat="mountains" onclick="selectCategory('mountains',this)">⛰️ Mountains <span class="fp-check">✓</span></button>
-  <button class="fp-option d"          data-cat="deserts"   onclick="selectCategory('deserts',this)">🏜️ Deserts   <span class="fp-check">✓</span></button>
-</div>
-<div class="click-away" id="clickAway" onclick="closeFilter()"></div>
-
-<div id="map"></div>
-
-<!-- ════ DESKTOP INFO CARD ════ -->
-<div class="info-card" id="infoCard">
-  <div class="ic-top">
-    <div class="ic-badge" id="icBadge"></div>
-    <button class="ic-close" onclick="closeInfo()">×</button>
-  </div>
-  <div class="ic-name" id="icName"></div>
-  <div class="ic-rows">
-    <div class="ic-row"><span class="ic-label" id="icL1">Origin</span><span class="ic-val" id="icV1">—</span></div>
-    <div class="ic-row"><span class="ic-label" id="icL2">Ends</span><span class="ic-val" id="icV2">—</span></div>
-    <div class="ic-row"><span class="ic-label" id="icL3">Length</span><span class="ic-val" id="icV3">—</span></div>
-    <div class="ic-row"><span class="ic-label" id="icL4">Region</span><span class="ic-val" id="icV4">—</span></div>
-  </div>
-</div>
-
-<!-- ════ DESKTOP AI FAB ════ -->
-<button class="ai-fab" onclick="openSearch()" title="Ctrl+K">✦ AI Search</button>
-
-<!-- ════ MOBILE BOTTOM BAR ════ -->
-<div class="mobile-bottom-bar" id="mobileBottomBar">
-  <!-- Top row: controls -->
-  <div class="mbb-top-row">
-    <button class="filter-btn" style="font-size:11.5px;padding:5px 10px;" onclick="toggleFilter()">
-      <span id="mFilterIcon">🌊</span>
-      <span id="mFilterLabel">Rivers</span>
-      <span class="filter-arrow">▼</span>
-    </button>
-    <button class="mbb-show-btn" id="mShowAllBtn" onclick="toggleAll()">All</button>
-    <button class="mbb-list-btn" onclick="openMobSheet()">☰</button>
-
-    <!-- Active item chip (eye icon + name + close) -->
-    <div class="mbb-active-chip" id="mbbActiveChip">
-      <span class="mac-eye">👁</span>
-      <span class="mac-name" id="mbbActiveName">—</span>
-      <button class="mac-close" onclick="clearActiveItem()">×</button>
-    </div>
-
-    <!-- AI button — right, slightly up -->
-    <button class="mbb-ai-btn" onclick="openSearch()">
-      <span class="ai-sparkle">✦</span>
-      <span>AI</span>
-    </button>
-  </div>
-
-  <!-- Bottom row: scrollable item pills -->
-  <div class="mbb-scroll-row" id="mbbScrollRow"></div>
-</div>
-
-<!-- ════ MOBILE BOTTOM SHEET ════ -->
-<div class="mob-sheet-overlay" id="mobSheetOverlay" onclick="closeMobSheet()"></div>
-<div class="mob-sheet" id="mobSheet">
-  <div class="mob-sheet-handle"></div>
-  <div class="mob-sheet-head">
-    <div class="mob-sheet-title" id="mobSheetTitle">Rivers</div>
-    <button class="mob-sheet-close" onclick="closeMobSheet()">×</button>
-  </div>
-  <div class="mob-sheet-body" id="mobSheetBody"></div>
-</div>
-
-<!-- ════ MOBILE INFO PANEL ════ -->
-<div class="mob-info-panel" id="mobInfoPanel">
-  <div class="mip-top">
-    <div class="mip-badge" id="mipBadge"></div>
-    <button class="mip-close" onclick="closeMobInfo()">×</button>
-  </div>
-  <div class="mip-name" id="mipName"></div>
-  <div class="mip-grid">
-    <div class="mip-item"><span class="mip-label" id="mipL1">Origin</span><span class="mip-val" id="mipV1">—</span></div>
-    <div class="mip-item"><span class="mip-label" id="mipL2">Ends At</span><span class="mip-val" id="mipV2">—</span></div>
-    <div class="mip-item"><span class="mip-label" id="mipL3">Length</span><span class="mip-val" id="mipV3">—</span></div>
-    <div class="mip-item"><span class="mip-label" id="mipL4">Region</span><span class="mip-val" id="mipV4">—</span></div>
-  </div>
-</div>
-
-<!-- ════ SEARCH MODAL ════ -->
-<div class="search-overlay" id="searchOverlay" onclick="overlayBg(event)">
-  <div class="search-modal">
-    <div class="sm-head">
-      <h3>✦ AI Search</h3>
-      <button class="sm-close" onclick="closeSearch()">×</button>
-    </div>
-    <p class="sm-sub">Koi bhi river, forest, mountain ya desert — AI map par dikhayega.</p>
-    <div class="cache-notice">💾 Cache: <span id="cacheCount">0</span> saved — instant load</div>
-    <div class="sm-row">
-      <input class="sm-input" id="searchQuery" placeholder="e.g. Sahara, Pakistan rivers, Alps..." />
-      <button class="sm-go" onclick="doAISearch()">Go →</button>
-    </div>
-    <div class="sm-chips">
-      <span class="sm-chip" onclick="setChip(this)">Ganga</span>
-      <span class="sm-chip" onclick="setChip(this)">Top 5 Indian Rivers</span>
-      <span class="sm-chip" onclick="setChip(this)">10 Pakistan Rivers</span>
-      <span class="sm-chip" onclick="setChip(this)">Amazon Rainforest</span>
-      <span class="sm-chip" onclick="setChip(this)">Sahara Desert</span>
-      <span class="sm-chip" onclick="setChip(this)">Andes Mountains</span>
-      <span class="sm-chip" onclick="setChip(this)">Thar Desert</span>
-      <span class="sm-chip" onclick="setChip(this)">Himalayas</span>
+  <div class="camera-modal" id="cameraModal">
+    <div class="camera-container">
+      <h3 style="color:#1e293b; font-size: 1.1rem; margin:0;">Live OCR Scanner</h3>
+      <video id="videoElement" autoplay playsinline></video>
+      <canvas id="canvasElement"></canvas>
+      <div class="cam-controls">
+        <button class="cam-btn btn-cancel" onclick="closeCamera()">Cancel</button>
+        <button class="cam-btn btn-capture" onclick="captureImage()">📸 Capture & Scan</button>
+      </div>
     </div>
   </div>
-</div>
 
-<div class="toast" id="toast"></div>
+  <div class="header" id="appHeader">
+    <div class="header-left">
+      <button class="mobile-menu-btn" onclick="toggleSidebar()">☰</button>
+      <h2>🤖 Gemini AI</h2>
+      <span id="currentModeInfo" class="mode-indicator">Normal Mode</span>
+    </div>
+    
+    <div class="header-right">
+      <button class="top-scan-btn" title="Live OCR Scan" onclick="openCamera()">📸</button>
+    </div>
+  </div>
 
-<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-polylinedecorator/1.6.0/leaflet.polylineDecorator.min.js"></script>
-<script>
-// ══════════════════════════════════════════════
-// DATA
-// ══════════════════════════════════════════════
-const DB = {
-  rivers: {
-    "Ganga":       { name:"Ganga",        color:"#38bdf8", path:[[30.98,78.92],[29.95,78.17],[27.47,79.92],[26.85,80.92],[25.45,81.88],[25.32,83.01],[25.57,85.13],[24.87,87.95],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" },
-    "Yamuna":      { name:"Yamuna",       color:"#67e8f9", path:[[31.01,78.45],[30.37,78.07],[29.42,77.67],[28.66,77.22],[27.18,78.02],[26.47,79.92],[25.43,81.88]], origin:"Yamunotri, Uttarakhand", dest:"Prayagraj", length:"1,376 km", region:"North India" },
-    "Narmada":     { name:"Narmada",      color:"#06b6d4", path:[[22.67,81.76],[22.95,80.45],[22.75,79.20],[22.30,77.42],[22.03,76.10],[21.77,74.45],[21.52,73.38],[21.72,72.68]], origin:"Amarkantak, MP", dest:"Gulf of Khambhat", length:"1,312 km", region:"Central India" },
-    "Godavari":    { name:"Godavari",     color:"#0ea5e9", path:[[19.97,73.78],[19.38,74.72],[19.12,76.55],[18.43,79.50],[17.88,80.78],[17.00,81.55],[16.52,82.23]], origin:"Trimbakeshwar, MH", dest:"Bay of Bengal", length:"1,465 km", region:"Peninsular India" },
-    "Krishna":     { name:"Krishna",      color:"#60a5fa", path:[[17.08,73.82],[16.85,75.23],[16.22,76.48],[15.72,78.30],[16.52,80.35],[16.12,81.45],[15.72,80.87]], origin:"Mahabaleshwar, MH", dest:"Bay of Bengal", length:"1,400 km", region:"Peninsular India" },
-    "Brahmaputra": { name:"Brahmaputra",  color:"#2dd4bf", path:[[29.80,93.50],[27.88,94.80],[26.18,91.77],[25.58,90.05],[24.88,89.42],[23.73,89.65],[23.10,90.50]], origin:"Kailash, Tibet", dest:"Bay of Bengal", length:"2,900 km", region:"Northeast India" },
-    "Mahanadi":    { name:"Mahanadi",     color:"#93c5fd", path:[[21.58,83.05],[20.77,82.22],[20.25,82.72],[20.88,84.12],[20.22,85.88],[19.88,86.57]], origin:"Dhamtari, Chhattisgarh", dest:"Bay of Bengal", length:"858 km", region:"East India" },
-    "Cauvery":     { name:"Cauvery",      color:"#22d3ee", path:[[12.33,75.57],[12.17,76.05],[11.87,77.03],[11.42,77.72],[10.92,78.78],[10.57,79.43],[11.13,79.85]], origin:"Talakaveri, Karnataka", dest:"Bay of Bengal", length:"800 km", region:"South India" },
-    "Indus":       { name:"Indus",        color:"#818cf8", path:[[32.50,79.50],[33.98,77.58],[34.48,72.92],[31.55,72.62],[30.18,71.48],[27.70,68.62],[24.10,67.45]], origin:"Tibet (Kailash)", dest:"Arabian Sea", length:"3,180 km", region:"Pakistan/India" },
-    "Tapti":       { name:"Tapti",        color:"#7dd3fc", path:[[21.77,78.12],[21.32,77.22],[21.08,76.15],[21.17,75.05],[21.08,73.38],[21.17,72.85]], origin:"Multai, Betul MP", dest:"Gulf of Khambhat", length:"724 km", region:"Central/West India" }
-  },
-  forests: {
-    "Jim Corbett NP":  { name:"Jim Corbett NP",       latlng:[29.53,78.77], radius:35000, color:"#4ade80", origin:"Uttarakhand", dest:"Tiger Reserve", length:"520 sq km", region:"North India" },
-    "Sundarbans":      { name:"Sundarbans",            latlng:[21.95,88.68], radius:55000, color:"#22c55e", origin:"West Bengal",    dest:"UNESCO Mangrove", length:"10,000 sq km", region:"East India" },
-    "Kanha Reserve":   { name:"Kanha Tiger Reserve",  latlng:[22.33,80.61], radius:45000, color:"#86efac", origin:"Madhya Pradesh", dest:"National Park", length:"940 sq km", region:"Central India" },
-    "Nagarhole NP":    { name:"Nagarhole NP",          latlng:[11.97,76.10], radius:30000, color:"#16a34a", origin:"Karnataka",      dest:"Wildlife Sanctuary", length:"642 sq km", region:"South India" },
-    "Kaziranga":       { name:"Kaziranga NP",          latlng:[26.58,93.17], radius:32000, color:"#4ade80", origin:"Assam",          dest:"Rhino Reserve", length:"430 sq km", region:"Northeast India" },
-    "Gir Forest":      { name:"Gir Forest NP",         latlng:[21.13,70.80], radius:30000, color:"#15803d", origin:"Gujarat",        dest:"Asiatic Lion Reserve", length:"1,412 sq km", region:"West India" }
-  },
-  mountains: {
-    "Himalayas":     { name:"Himalayas",       color:"#a78bfa", path:[[34.0,74.0],[32.5,76.5],[31.0,79.5],[29.5,82.0],[28.0,85.0],[27.5,88.0],[27.0,91.5],[28.0,95.0]], origin:"Kashmir", dest:"Arunachal Pradesh", length:"2,400 km", region:"North India/Nepal" },
-    "Western Ghats": { name:"Western Ghats",  color:"#c4b5fd", path:[[21.5,73.5],[20.0,73.0],[18.5,73.8],[16.0,74.5],[13.0,75.5],[11.0,76.5],[8.5,77.0]], origin:"Gujarat border", dest:"Kerala", length:"1,600 km", region:"West/South India" },
-    "Eastern Ghats": { name:"Eastern Ghats",  color:"#8b5cf6", path:[[19.5,85.5],[17.5,82.5],[15.5,79.5],[13.5,79.0],[12.0,78.5]], origin:"Odisha", dest:"Tamil Nadu", length:"1,750 km", region:"East/South India" },
-    "Vindhya Range": { name:"Vindhya Range",  color:"#7c3aed", path:[[22.0,75.0],[23.0,78.0],[24.0,80.5],[24.5,82.5]], origin:"Gujarat/MP border", dest:"Mirzapur, UP", length:"1,050 km", region:"Central India" },
-    "Aravallis":     { name:"Aravalli Range", color:"#ddd6fe", path:[[24.58,73.68],[25.5,74.5],[26.8,75.5],[28.0,76.5],[28.63,77.22]], origin:"Gujarat", dest:"Delhi", length:"800 km", region:"Rajasthan/Delhi" }
-  },
-  deserts: {
-    "Thar Desert":        { name:"Thar Desert",        latlng:[26.92,70.90], radius:200000, color:"#fbbf24", origin:"Rajasthan, India", dest:"Sindh, Pakistan",       length:"200,000 sq km", region:"NW India/Pakistan" },
-    "Ladakh Cold Desert": { name:"Ladakh Cold Desert", latlng:[34.15,77.57], radius:80000,  color:"#fde68a", origin:"Leh, Ladakh",      dest:"High Altitude Plateau", length:"45,000 sq km",  region:"North India" },
-    "Spiti Valley":       { name:"Spiti Valley",       latlng:[32.25,78.05], radius:35000,  color:"#f59e0b", origin:"Himachal Pradesh", dest:"Cold Desert",           length:"7,000 sq km",   region:"North India" }
-  }
-};
+  <div class="main">
+    <div class="sidebar" id="appSidebar">
+      <button class="close-sidebar-btn" onclick="toggleSidebar()">❮❮ Back to Chat</button>
+      
+      <div class="sidebar-btns">
+        <button class="btn-new" onclick="setMode(false)">+ Chat</button>
+        <button class="btn-study" onclick="setMode(true)" title="Extract questions from images">📚 Study</button>
+      </div>
+      <div class="chat-list" id="chatList"></div>
+    </div>
 
-const CAT_META = {
-  rivers:    { icon:"🌊", label:"Rivers",    color:"#38bdf8", cls:"river",    lbs:["Origin","Flows To","Length","Region"] },
-  forests:   { icon:"🌲", label:"Forests",   color:"#4ade80", cls:"forest",   lbs:["State","Type","Area","Region"] },
-  mountains: { icon:"⛰️", label:"Mountains", color:"#a78bfa", cls:"mountain", lbs:["Start","End","Length","Region"] },
-  deserts:   { icon:"🏜️", label:"Deserts",   color:"#fbbf24", cls:"desert",   lbs:["Location","Type","Area","Region"] },
-};
+    <div class="chat-area">
+      <div class="messages" id="messages"></div>
+      <div class="input-container">
+        <div class="input-wrapper">
+          <div id="attachmentPreview" class="attachment-preview"></div>
+          <div class="input-row">
+            
+            <label class="icon-btn" title="Upload Files">
+              📎<input type="file" multiple accept="image/*,.pdf,.txt" style="display:none;" onchange="handleMultipleUpload(event)">
+            </label>
 
-// ══════════════════════════════════════════════
-// CACHE
-// ══════════════════════════════════════════════
-const CACHE_KEY = 'aimap_cache_v1';
-const PRESET_CACHE = {
-  "top 5 indian rivers": { type:"rivers", ts:0, items:[
-    { name:"Ganga",    color:"#38bdf8", isRiver:true, path:[[30.98,78.92],[27.47,79.92],[25.32,83.01],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" },
-    { name:"Yamuna",   color:"#67e8f9", isRiver:true, path:[[31.01,78.45],[29.42,77.67],[27.18,78.02],[25.43,81.88]], origin:"Yamunotri", dest:"Prayagraj", length:"1,376 km", region:"North India" },
-    { name:"Narmada",  color:"#06b6d4", isRiver:true, path:[[22.67,81.76],[22.75,79.20],[21.77,74.45],[21.72,72.68]], origin:"Amarkantak, MP", dest:"Gulf of Khambhat", length:"1,312 km", region:"Central India" },
-    { name:"Godavari", color:"#0ea5e9", isRiver:true, path:[[19.97,73.78],[19.12,76.55],[17.88,80.78],[16.52,82.23]], origin:"Trimbakeshwar, MH", dest:"Bay of Bengal", length:"1,465 km", region:"Peninsular India" },
-    { name:"Krishna",  color:"#a78bfa", isRiver:true, path:[[17.08,73.82],[16.22,76.48],[16.52,80.35],[15.72,80.87]], origin:"Mahabaleshwar, MH", dest:"Bay of Bengal", length:"1,400 km", region:"Peninsular India" }
-  ]},
-  "ganga": { type:"rivers", ts:0, items:[
-    { name:"Ganga", color:"#38bdf8", isRiver:true, path:[[30.98,78.92],[29.95,78.17],[27.47,79.92],[26.85,80.92],[25.45,81.88],[25.32,83.01],[25.57,85.13],[24.87,87.95],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" }
-  ]},
-  "thar desert": { type:"deserts", ts:0, items:[
-    { name:"Thar Desert", latlng:[26.92,70.90], radius:200000, color:"#fbbf24", origin:"Rajasthan, India", dest:"Sindh, Pakistan", length:"200,000 sq km", region:"NW India/Pakistan" }
-  ]},
-  "sahara desert": { type:"deserts", ts:0, items:[
-    { name:"Sahara Desert", latlng:[23.00,12.00], radius:2500000, color:"#f59e0b", origin:"Morocco/Algeria", dest:"Sudan/Egypt", length:"9,200,000 sq km", region:"North Africa" }
-  ]},
-  "himalayas": { type:"mountains", ts:0, items:[
-    { name:"Himalayas", color:"#a78bfa", path:[[34.0,74.0],[32.5,76.5],[31.0,79.5],[29.5,82.0],[28.0,85.0],[27.5,88.0],[27.0,91.5],[28.0,95.0]], origin:"Kashmir", dest:"Arunachal Pradesh", length:"2,400 km", region:"North India/Nepal" }
-  ]},
-  "andes mountains": { type:"mountains", ts:0, items:[
-    { name:"Andes Mountains", color:"#c4b5fd", path:[[11.0,-72.0],[5.0,-74.0],[-1.0,-77.0],[-8.0,-77.5],[-16.0,-72.0],[-23.0,-67.0],[-33.0,-70.5],[-44.0,-72.0],[-52.0,-73.0]], origin:"Venezuela/Colombia", dest:"Patagonia, Argentina", length:"7,000 km", region:"South America" }
-  ]},
-  "amazon rainforest": { type:"forests", ts:0, items:[
-    { name:"Amazon Rainforest", latlng:[-3.50,-60.00], radius:2800000, color:"#4ade80", origin:"Brazil/Peru/Colombia", dest:"World's Largest", length:"5,500,000 sq km", region:"South America" }
-  ]},
-  "congo rainforest": { type:"forests", ts:0, items:[
-    { name:"Congo Rainforest", latlng:[-1.00,23.00], radius:1800000, color:"#22c55e", origin:"DRC, Congo", dest:"2nd Largest", length:"3,300,000 sq km", region:"Central Africa" }
-  ]}
-};
-function loadCache(){ try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}')}catch(e){return{}} }
-function saveCache(c){ try{localStorage.setItem(CACHE_KEY,JSON.stringify(c))}catch(e){} }
-function getCached(q){ return loadCache()[q.toLowerCase().trim()]||null; }
-function setCache(q,type,items){ const c=loadCache(); c[q.toLowerCase().trim()]={type,items,ts:Date.now()}; saveCache(c); updateCacheCount(); }
-function updateCacheCount(){ const el=document.getElementById('cacheCount'); if(el) el.textContent=Object.keys(loadCache()).length; }
-function initCache(){ const c=loadCache(); let a=0; Object.keys(PRESET_CACHE).forEach(k=>{if(!c[k]){c[k]=PRESET_CACHE[k];a++;}}); if(a)saveCache(c); updateCacheCount(); }
+            <input type="text" id="userInput" placeholder="Ask Gemini..." onkeypress="if(event.key === 'Enter') sendMessage()">
+            <button class="send-btn" onclick="sendMessage()">➤</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-// ══════════════════════════════════════════════
-// MAP
-// ══════════════════════════════════════════════
-const isMobile=()=>window.innerWidth<=640;
-const map=L.map('map',{zoomControl:false}).setView([22.5,78.0],5);
-L.control.zoom({position:'topright'}).addTo(map);
-L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
-  attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:20
-}).addTo(map);
+  <script>
+    // 🔗 CENTRALIZED BACKEND URL
+    const API_BASE_URL = "http://localhost:5000";
 
-let layerGroup=L.layerGroup().addTo(map);
-let activeCategory='rivers';
-let isAllShowing=false;
-let aiResults=[];        // [{name, item}]
-let activeItemData=null; // currently selected item
+    let currentChatId = null;
+    let isStudyMode = false;
+    let pendingAttachments = []; 
+    let activeQuestionContext = ""; 
 
-// ══════════════════════════════════════════════
-// FILTER
-// ══════════════════════════════════════════════
-function toggleFilter(){
-  const p=document.getElementById('filterPopup'),b=document.getElementById('filterBtn'),ca=document.getElementById('clickAway');
-  const open=p.classList.toggle('open');
-  b.classList.toggle('open',open); ca.classList.toggle('on',open);
-}
-function closeFilter(){
-  document.getElementById('filterPopup').classList.remove('open');
-  document.getElementById('filterBtn').classList.remove('open');
-  document.getElementById('clickAway').classList.remove('on');
-}
-function selectCategory(cat,el){
-  closeFilter(); activeCategory=cat; aiResults=[];
-  document.querySelectorAll('.fp-option').forEach(o=>o.classList.remove('selected'));
-  el.classList.add('selected');
-  const m=CAT_META[cat];
-  document.getElementById('filterIcon').textContent=m.icon;
-  document.getElementById('filterLabel').textContent=m.label;
-  const mfi=document.getElementById('mFilterIcon'), mfl=document.getElementById('mFilterLabel');
-  if(mfi) mfi.textContent=m.icon; if(mfl) mfl.textContent=m.label;
-  const msb=document.getElementById('mShowAllBtn');
-  if(msb){ msb.textContent='All'; msb.classList.remove('active'); }
-  renderNav();
-  renderMobScrollRow();
-  renderMobSheet();
-  clearActiveItem();
-  setTimeout(()=>{ isAllShowing=false; toggleAll(); },100);
-}
+    // --- 📸 LIVE CAMERA LOGIC ---
+    let videoStream = null;
 
-// ══════════════════════════════════════════════
-// DESKTOP NAV STRIP — all items scrollable
-// ══════════════════════════════════════════════
-function renderNav(){
-  const strip=document.getElementById('navItems');
-  strip.innerHTML='';
-  isAllShowing=false; closeInfo();
-  const m=CAT_META[activeCategory];
-  document.getElementById('showAllBtn').textContent=`Show All ${m.label}`;
-  document.getElementById('showAllBtn').classList.remove('active');
+    async function openCamera() {
+      const modal = document.getElementById('cameraModal');
+      const video = document.getElementById('videoElement');
+      modal.style.display = 'flex';
 
-  // Local DB items
-  Object.keys(DB[activeCategory]).forEach(name=>strip.appendChild(makeNavBtn(name,name,false,null)));
-
-  // AI results — always appended after local, with a divider label
-  if(aiResults.length){
-    const sep=document.createElement('span'); sep.className='ai-section-label'; sep.textContent='— ✦ AI';
-    strip.appendChild(sep);
-    aiResults.forEach((r,i)=>{ const btn=makeNavBtn(r.name,r.name,true,i); strip.appendChild(btn); });
-  }
-}
-
-function makeNavBtn(label,key,isAI,aiIdx){
-  const btn=document.createElement('button');
-  btn.className='nav-item-btn'+(isAI?' ai-result':'');
-  btn.textContent=label;
-  if(isAI) btn.dataset.aiIdx=aiIdx;
-  btn.onclick=()=>{ isAI?selectItem(null,parseInt(btn.dataset.aiIdx),btn):selectItem(key,null,btn); };
-  return btn;
-}
-
-// ══════════════════════════════════════════════
-// MOBILE SCROLL ROW — pills for all items
-// ══════════════════════════════════════════════
-function renderMobScrollRow(){
-  const row=document.getElementById('mbbScrollRow');
-  if(!row) return;
-  row.innerHTML='';
-
-  // Local items
-  Object.keys(DB[activeCategory]).forEach(name=>{
-    const item=DB[activeCategory][name];
-    row.appendChild(makePill(name,item.color,false,null,name));
-  });
-
-  // AI results
-  if(aiResults.length){
-    aiResults.forEach((r,i)=>{
-      row.appendChild(makePill(r.name,r.item.color,true,i,null));
-    });
-  }
-}
-
-function makePill(label,color,isAI,aiIdx,localKey){
-  const pill=document.createElement('div');
-  pill.className='mbb-item-pill'+(isAI?' ai-pill':'');
-  pill.dataset.key=localKey||'';
-  pill.dataset.aiIdx=aiIdx!==null?aiIdx:'';
-
-  const dot=document.createElement('span');
-  dot.className='mbb-pill-dot';
-  dot.style.background=color||'#38bdf8';
-  pill.appendChild(dot);
-
-  const nm=document.createElement('span');
-  nm.textContent=label;
-  pill.appendChild(nm);
-
-  pill.onclick=()=>{
-    selectItem(isAI?null:localKey, isAI?aiIdx:null, null);
-  };
-  return pill;
-}
-
-// Mark active pill
-function setActivePill(localKey, aiIdx){
-  document.querySelectorAll('.mbb-item-pill').forEach(p=>{
-    p.classList.remove('active-pill');
-    const style=CAT_META[activeCategory];
-    p.style.background='';
-    p.style.color='';
-    p.style.borderColor='';
-  });
-  // find and highlight
-  document.querySelectorAll('.mbb-item-pill').forEach(p=>{
-    const match=localKey!==null ? p.dataset.key===localKey : p.dataset.aiIdx===String(aiIdx);
-    if(match){
-      p.classList.add('active-pill');
-      const color=p.querySelector('.mbb-pill-dot')?.style.background||'#38bdf8';
-      p.style.background=color;
-      p.style.color='#000';
-      p.style.borderColor=color;
-      // scroll into view
-      p.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+      try {
+        // Request camera access (facing environment/back camera if on mobile)
+        videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+        video.srcObject = videoStream;
+      } catch (err) {
+        alert("Camera access denied or not available: " + err.message);
+        closeCamera();
+      }
     }
-  });
-}
 
-// ══════════════════════════════════════════════
-// MOBILE SHEET
-// ══════════════════════════════════════════════
-function openMobSheet(){
-  renderMobSheet();
-  document.getElementById('mobSheetOverlay').classList.add('open');
-  document.getElementById('mobSheet').classList.add('open');
-}
-function closeMobSheet(){
-  document.getElementById('mobSheetOverlay').classList.remove('open');
-  document.getElementById('mobSheet').classList.remove('open');
-}
-function renderMobSheet(){
-  const body=document.getElementById('mobSheetBody');
-  const m=CAT_META[activeCategory];
-  document.getElementById('mobSheetTitle').textContent=`${m.icon} ${m.label}`;
-  body.innerHTML='';
-  Object.keys(DB[activeCategory]).forEach(name=>{
-    const item=DB[activeCategory][name];
-    body.appendChild(makeMobItem(name,item,false,null));
-  });
-  if(aiResults.length){
-    const sec=document.createElement('div'); sec.className='mob-section-label'; sec.textContent='✦ AI Results';
-    body.appendChild(sec);
-    aiResults.forEach((r,i)=>body.appendChild(makeMobItem(r.name,r.item,true,i)));
-  }
-}
-function makeMobItem(name,item,isAI,aiIdx){
-  const div=document.createElement('div'); div.className='mob-item';
-  const dot=document.createElement('div'); dot.className='mob-item-dot'; dot.style.background=item.color||'#38bdf8';
-  const info=document.createElement('div');
-  const nm=document.createElement('div'); nm.className='mob-item-name'; nm.textContent=name;
-  const sub=document.createElement('div'); sub.className='mob-item-sub'; sub.textContent=item.region||item.origin||'';
-  info.appendChild(nm); info.appendChild(sub);
-  const arr=document.createElement('span'); arr.className='mob-item-arrow'; arr.textContent='›';
-  div.appendChild(dot); div.appendChild(info); div.appendChild(arr);
-  div.onclick=()=>{ closeMobSheet(); selectItem(isAI?null:name, isAI?aiIdx:null, null); };
-  return div;
-}
-
-// ══════════════════════════════════════════════
-// ACTIVE ITEM CHIP (mobile bottom bar)
-// ══════════════════════════════════════════════
-function showActiveChip(name){
-  const chip=document.getElementById('mbbActiveChip');
-  const nm=document.getElementById('mbbActiveName');
-  if(chip&&nm){ nm.textContent=name; chip.classList.add('show'); }
-}
-function hideActiveChip(){
-  const chip=document.getElementById('mbbActiveChip');
-  if(chip) chip.classList.remove('show');
-}
-function clearActiveItem(){
-  layerGroup.clearLayers(); closeInfo(); closeMobInfo();
-  hideActiveChip(); activeItemData=null;
-  clearActivePills();
-  isAllShowing=false;
-  document.getElementById('showAllBtn').classList.remove('active');
-  const msb=document.getElementById('mShowAllBtn'); if(msb){msb.textContent='All';msb.classList.remove('active');}
-  clearActive();
-}
-function clearActivePills(){
-  document.querySelectorAll('.mbb-item-pill').forEach(p=>{
-    p.classList.remove('active-pill');
-    p.style.background=''; p.style.color=''; p.style.borderColor='';
-  });
-}
-
-// ══════════════════════════════════════════════
-// UNIFIED SELECT
-// ══════════════════════════════════════════════
-function selectItem(localName, aiIdx, navBtn){
-  layerGroup.clearLayers(); closeInfo(); closeMobInfo();
-  isAllShowing=false;
-  clearActive();
-  document.getElementById('showAllBtn').classList.remove('active');
-  const msb=document.getElementById('mShowAllBtn'); if(msb){msb.textContent='All';msb.classList.remove('active');}
-
-  let item;
-  if(localName!==null){
-    item=DB[activeCategory][localName];
-    if(navBtn) navBtn.classList.add('active','c-'+CAT_META[activeCategory].cls);
-    setActivePill(localName, null);
-  } else {
-    const r=aiResults[aiIdx]; if(!r) return;
-    item=r.item;
-    if(navBtn) navBtn.classList.add('active','c-'+CAT_META[activeCategory].cls);
-    setActivePill(null, aiIdx);
-  }
-  if(!item) return;
-  activeItemData=item;
-
-  if(item.path?.length>1){ const l=drawPathRaw(item,false); map.fitBounds(l.getBounds(),{padding:[60,60]}); }
-  else if(item.latlng){ drawCircleRaw(item,false); map.setView(item.latlng,7); }
-
-  showActiveChip(item.name);
-
-  if(isMobile()) showMobInfo(item,activeCategory);
-  else showInfo(item,activeCategory);
-}
-
-function toggleAll(){
-  isAllShowing=!isAllShowing; layerGroup.clearLayers(); closeInfo(); closeMobInfo();
-  clearActivePills(); clearActive(); hideActiveChip(); activeItemData=null;
-  const allBtn=document.getElementById('showAllBtn');
-  const mAllBtn=document.getElementById('mShowAllBtn');
-  const m=CAT_META[activeCategory];
-  if(isAllShowing){
-    allBtn.classList.add('active'); allBtn.textContent=`Hide ${m.label}`;
-    if(mAllBtn){mAllBtn.classList.add('active');mAllBtn.textContent='Hide';}
-    // Draw local items
-    Object.values(DB[activeCategory]).forEach(item=>{ item.path?drawPath(item,true):drawCircle(item,true); });
-    // Draw AI results too
-    aiResults.forEach(r=>{ r.item.path?.length>1?drawPathRaw(r.item,true):r.item.latlng&&drawCircleRaw(r.item,true); });
-    map.setView([22.5,78.0],5);
-  } else {
-    allBtn.classList.remove('active'); allBtn.textContent=`Show All ${m.label}`;
-    if(mAllBtn){mAllBtn.classList.remove('active');mAllBtn.textContent='All';}
-  }
-}
-function clearActive(){
-  document.querySelectorAll('.nav-item-btn').forEach(b=>b.classList.remove('active','c-river','c-forest','c-mountain','c-desert'));
-}
-
-// ══════════════════════════════════════════════
-// DRAW
-// ══════════════════════════════════════════════
-function drawPath(item,thin){ return drawPathRaw(item,thin); }
-function drawPathRaw(item,thin){
-  const w=thin?2.8:5.5;
-  const line=L.polyline(item.path,{color:item.color||'#38bdf8',weight:w,opacity:.92}).addTo(layerGroup);
-  if(activeCategory==='rivers'||item.isRiver)
-    L.polyline(item.path,{color:'#fff',weight:thin?1.4:2.3,opacity:.5,className:'river-flow'}).addTo(layerGroup);
-  if(typeof L.polylineDecorator!=='undefined')
-    L.polylineDecorator(line,{patterns:[{offset:'5%',repeat:thin?280:140,
-      symbol:L.Symbol.arrowHead({pixelSize:thin?7:12,polygon:false,
-        pathOptions:{stroke:true,color:'#fff',weight:thin?1.5:2.2,opacity:.8}})}]}).addTo(layerGroup);
-  return line;
-}
-function drawCircle(item,thin){ drawCircleRaw(item,thin); }
-function drawCircleRaw(item,thin){
-  L.circle(item.latlng,{
-    color:item.color||'#38bdf8',fillColor:item.color||'#38bdf8',
-    fillOpacity:thin?.12:.22,weight:thin?1.5:2.5,opacity:thin?.45:.8,radius:item.radius||50000
-  }).addTo(layerGroup);
-}
-
-// ══════════════════════════════════════════════
-// DESKTOP INFO CARD
-// ══════════════════════════════════════════════
-function showInfo(item,cat){
-  const m=CAT_META[cat];
-  const badge=document.getElementById('icBadge');
-  badge.textContent=m.label.replace(/s$/,'');
-  badge.style.cssText=`background:${m.color}22;color:${m.color};`;
-  document.getElementById('icName').textContent=item.name||'—';
-  m.lbs.forEach((l,i)=>document.getElementById('icL'+(i+1)).textContent=l);
-  document.getElementById('icV1').textContent=item.origin||'—';
-  document.getElementById('icV2').textContent=item.dest||'—';
-  document.getElementById('icV3').textContent=item.length||'—';
-  document.getElementById('icV4').textContent=item.region||'—';
-  const card=document.getElementById('infoCard');
-  if(!card._dragged){
-    card.style.cssText='display:block;position:fixed;bottom:24px;right:24px;top:auto;left:auto;transform:none;width:215px;';
-  } else { card.style.display='block'; }
-}
-function closeInfo(){
-  const card=document.getElementById('infoCard');
-  card.style.display='none'; card._dragged=false;
-}
-
-// ══════════════════════════════════════════════
-// MOBILE INFO PANEL
-// ══════════════════════════════════════════════
-function showMobInfo(item,cat){
-  const m=CAT_META[cat];
-  const badge=document.getElementById('mipBadge');
-  badge.textContent=m.label.replace(/s$/,'');
-  badge.style.cssText=`background:${m.color}22;color:${m.color};`;
-  document.getElementById('mipName').textContent=item.name||'—';
-  m.lbs.forEach((l,i)=>document.getElementById('mipL'+(i+1)).textContent=l);
-  document.getElementById('mipV1').textContent=item.origin||'—';
-  document.getElementById('mipV2').textContent=item.dest||'—';
-  document.getElementById('mipV3').textContent=item.length||'—';
-  document.getElementById('mipV4').textContent=item.region||'—';
-  document.getElementById('mobInfoPanel').style.display='block';
-}
-function closeMobInfo(){
-  document.getElementById('mobInfoPanel').style.display='none';
-  hideActiveChip();
-}
-
-// ══════════════════════════════════════════════
-// DESKTOP DRAG
-// ══════════════════════════════════════════════
-(function(){
-  const el=document.getElementById('infoCard');
-  let sx=0,sy=0,dragging=false;
-  el.addEventListener('mousedown',e=>{
-    if(e.target.classList.contains('ic-close')) return;
-    e.preventDefault(); dragging=true;
-    const rect=el.getBoundingClientRect();
-    sx=e.clientX-rect.left; sy=e.clientY-rect.top;
-    el.style.left=rect.left+'px'; el.style.top=rect.top+'px';
-    el.style.right='auto'; el.style.bottom='auto'; el.style.transform='none';
-    el._dragged=true;
-    document.onmousemove=e=>{ if(!dragging)return; el.style.left=(e.clientX-sx)+'px'; el.style.top=(e.clientY-sy)+'px'; };
-    document.onmouseup=()=>{ dragging=false; document.onmousemove=null; document.onmouseup=null; };
-  });
-})();
-
-// ══════════════════════════════════════════════
-// AI SEARCH
-// ══════════════════════════════════════════════
-function openSearch(){ updateCacheCount(); document.getElementById('searchOverlay').classList.add('open'); setTimeout(()=>document.getElementById('searchQuery').focus(),80); }
-function closeSearch(){ document.getElementById('searchOverlay').classList.remove('open'); }
-function overlayBg(e){ if(e.target.id==='searchOverlay') closeSearch(); }
-function setChip(el){ document.getElementById('searchQuery').value=el.textContent; }
-function updateFilterUI(cat){
-  const m=CAT_META[cat]||CAT_META.rivers;
-  document.getElementById('filterIcon').textContent=m.icon;
-  document.getElementById('filterLabel').textContent=m.label;
-  const mfi=document.getElementById('mFilterIcon'), mfl=document.getElementById('mFilterLabel');
-  if(mfi) mfi.textContent=m.icon; if(mfl) mfl.textContent=m.label;
-  document.querySelectorAll('.fp-option').forEach(o=>{ o.classList.remove('selected'); if(o.dataset.cat===cat) o.classList.add('selected'); });
-}
-
-async function doAISearch(){
-  const query=document.getElementById('searchQuery').value.trim();
-  if(!query){ showToast('⚠️ Kuch likho pehle!'); return; }
-  closeSearch();
-  const cached=getCached(query);
-  if(cached){ showToast(`💾 Cache: "${query}"`); loadFromCache(cached); return; }
-  showLoading(true);
-  try{
-    const res=await fetch('https://gemini-chatall.onrender.com/api/map/search',{
-      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({river:query})
-    });
-    const data=await res.json();
-    if(!data.success) throw new Error(data.message||'Failed');
-    const result=data.data; layerGroup.clearLayers(); closeInfo(); closeMobInfo();
-    const newAI=[]; const COLORS=['#38bdf8','#67e8f9','#06b6d4','#0ea5e9','#60a5fa','#2dd4bf','#22d3ee','#93c5fd','#818cf8','#a78bfa','#4ade80','#fbbf24'];
-    if(result.rivers?.length){
-      activeCategory='rivers'; updateFilterUI('rivers');
-      const bounds=[];
-      result.rivers.forEach((r,i)=>{
-        const item={ name:r.name, color:r.color||COLORS[i%COLORS.length], path:r.path, isRiver:true,
-          origin:r.source?.name||r.origin||'—', dest:r.mouth?.name||r.dest||'—',
-          length:r.length_km?r.length_km+' km':'—', region:r.region||'—' };
-        if(r.path?.length>1) drawPathRaw(item,false);
-        if(r.source) L.circleMarker([r.source.lat,r.source.lng],{radius:5,color:item.color,fillColor:'#fff',fillOpacity:1,weight:2}).bindPopup(`<b>${r.name}</b><br>${r.source.name}`).addTo(layerGroup);
-        if(r.mouth)  L.circleMarker([r.mouth.lat,r.mouth.lng], {radius:5,color:item.color,fillColor:'#111',fillOpacity:.9,weight:2}).bindPopup(`<b>${r.name}</b><br>${r.mouth.name}`).addTo(layerGroup);
-        newAI.push({name:r.name,item});
-        if(r.path?.length>1) bounds.push(L.polyline(r.path).getBounds());
-      });
-      if(bounds.length){ const b=bounds.reduce((a,c)=>a.extend(c),bounds[0]); map.fitBounds(b,{padding:[60,60]}); }
-      setCache(query,'rivers',newAI.map(r=>r.item));
-    } else if(result.items?.length){
-      const cat=data.type||activeCategory; activeCategory=cat; updateFilterUI(cat);
-      result.items.forEach((itm,i)=>{
-        const item={...itm,color:itm.color||COLORS[i%COLORS.length]};
-        if(item.path?.length>1) drawPathRaw(item,false); else if(item.latlng) drawCircleRaw(item,false);
-        newAI.push({name:itm.name,item});
-      });
-      setCache(query,cat,newAI.map(r=>r.item));
+    function closeCamera() {
+      const modal = document.getElementById('cameraModal');
+      modal.style.display = 'none';
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop()); // Stop the camera
+      }
     }
-    // AI results ADD to existing (don't clear local)
-    aiResults=newAI;
-    renderNav();
-    renderMobScrollRow();
-    renderMobSheet();
-    showToast(`✦ ${newAI.length} result(s)`);
-    if(newAI.length===1) selectItem(null,0,null);
-  } catch(err){ showToast('❌ '+err.message); }
-  finally{ showLoading(false); }
-}
 
-function loadFromCache(cached){
-  layerGroup.clearLayers(); closeInfo(); closeMobInfo();
-  const cat=cached.type||'rivers'; activeCategory=cat; updateFilterUI(cat);
-  const newAI=[];
-  cached.items.forEach(item=>{
-    if(item.path?.length>1) drawPathRaw(item,false); else if(item.latlng) drawCircleRaw(item,false);
-    newAI.push({name:item.name,item});
-  });
-  const paths=cached.items.filter(i=>i.path?.length>1);
-  if(paths.length){ const b=paths.map(i=>L.polyline(i.path).getBounds()).reduce((a,c)=>a.extend(c)); map.fitBounds(b,{padding:[60,60]}); }
-  else if(cached.items[0]?.latlng) map.setView(cached.items[0].latlng,5);
-  aiResults=newAI;
-  renderNav();
-  renderMobScrollRow();
-  renderMobSheet();
-  showToast(`💾 ${newAI.length} results`);
-  if(newAI.length===1) selectItem(null,0,null);
-}
+    function captureImage() {
+      const video = document.getElementById('videoElement');
+      const canvas = document.getElementById('canvasElement');
+      const context = canvas.getContext('2d');
 
-// ══════════════════════════════════════════════
-// UTILS
-// ══════════════════════════════════════════════
-function showLoading(on){ document.getElementById('loadingBar').style.display=on?'block':'none'; }
-let toastT;
-function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3200); }
+      // Set canvas size to video size
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
 
-document.addEventListener('keydown',e=>{
-  if(e.key==='Escape'){ closeSearch(); closeFilter(); }
-  if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
-});
-document.getElementById('searchQuery').addEventListener('keypress',e=>{ if(e.key==='Enter') doAISearch(); });
+      // Draw video frame to canvas
+      context.drawImage(video, 0, 0, canvas.width, canvas.height);
 
-// ══════════════════════════════════════════════
-// BOOT
-// ══════════════════════════════════════════════
-initCache();
-renderNav();
-renderMobScrollRow();
-renderMobSheet();
-setTimeout(()=>{ isAllShowing=false; toggleAll(); },300);
-</script>
+      // Convert canvas to Base64 image
+      const imageDataURL = canvas.toDataURL('image/jpeg', 0.8);
+      
+      closeCamera(); // Close camera UI immediately
+      
+      // Process the image for OCR
+      processScannedImage(imageDataURL);
+    }
+
+    async function processScannedImage(base64Data) {
+      const inputEl = document.getElementById('userInput');
+      const originalPlaceholder = inputEl.placeholder;
+      
+      inputEl.value = "";
+      inputEl.placeholder = "Scanning text... Please wait ⏳";
+      inputEl.disabled = true;
+
+      const attachment = { type: 'image', data: base64Data, name: 'live_scan.jpg', mimeType: 'image/jpeg' };
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/chat/search`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ 
+             query: "Extract all the readable text from this image exactly as written. Do NOT answer the question, do NOT add extra conversation. Just give me the pure text.", 
+             chatId: null, 
+             attachments: [attachment], 
+             isStudyMode: false 
+          })
+        });
+        const data = await res.json();
+        
+        if (data.success) {
+          let cleanText = data.result.replace(/```text/g, '').replace(/```/g, '').trim();
+          inputEl.value = cleanText;
+        } else {
+          alert("Failed to extract text from image.");
+        }
+      } catch (err) {
+        alert("Error connecting to server for scan.");
+      } finally {
+        inputEl.placeholder = originalPlaceholder;
+        inputEl.disabled = false;
+        inputEl.focus(); 
+      }
+    }
+    // --- 📸 END LIVE CAMERA LOGIC ---
+
+    function toggleSidebar() { document.getElementById('appSidebar').classList.toggle('open'); }
+
+    document.getElementById('messages').addEventListener('scroll', function() {
+      const header = document.getElementById('appHeader');
+      if (this.scrollTop > 30) header.classList.add('compact');
+      else header.classList.remove('compact');
+    });
+
+    function setMode(study) {
+      isStudyMode = study;
+      activeQuestionContext = "";
+      document.getElementById('currentModeInfo').className = `mode-indicator ${study ? 'study' : ''}`;
+      document.getElementById('currentModeInfo').innerText = study ? '📚 Study Mode Active' : 'Normal Mode';
+      document.getElementById('messages').innerHTML = ''; 
+      pendingAttachments = [];
+      updatePreview();
+      
+      if(window.innerWidth <= 768) toggleSidebar();
+      
+      if(study) addMessage('assistant', "<b>Study Mode:</b> Upload images. I will extract unique questions.");
+      else createNewChat();
+    }
+
+    async function createNewChat() {
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/chat/create`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: "New Chat", mode: "gemini-pro" })
+        });
+        const data = await res.json();
+        if (data.success) { currentChatId = data.chatId; }
+      } catch (e) { currentChatId = "temp"; }
+    }
+
+    function handleMultipleUpload(e) {
+      const files = Array.from(e.target.files);
+      files.forEach(file => {
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const isImage = file.type.startsWith('image/');
+          pendingAttachments.push({ type: isImage ? 'image' : 'file', data: event.target.result, name: file.name, mimeType: file.type });
+          updatePreview();
+        };
+        reader.readAsDataURL(file);
+      });
+      e.target.value = '';
+    }
+
+    function updatePreview() {
+      const box = document.getElementById('attachmentPreview');
+      if (pendingAttachments.length === 0) { box.style.display = 'none'; return; }
+      box.style.display = 'flex';
+      let html = '';
+      pendingAttachments.forEach((att, index) => {
+        if(att.type === 'image') html += `<div class="preview-item"><img src="${att.data}"><button style="position:absolute;top:-5px;right:-5px;background:red;color:white;border:none;border-radius:50%;cursor:pointer;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;" onclick="removeAtt(${index})">✕</button></div>`;
+        else html += `<div class="preview-item" style="background:#e2e8f0;padding:6px;border-radius:6px;font-size:0.75rem;">📄 ${att.name}<button style="position:absolute;top:-5px;right:-5px;background:red;color:white;border:none;border-radius:50%;cursor:pointer;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;" onclick="removeAtt(${index})">✕</button></div>`;
+      });
+      box.innerHTML = html;
+    }
+
+    function removeAtt(index) { pendingAttachments.splice(index, 1); updatePreview(); }
+
+    function addMessage(role, text, attachments = []) {
+      const container = document.getElementById('messages');
+      const div = document.createElement('div');
+      div.className = `message-wrapper ${role}`;
+      
+      let html = '';
+      if (attachments && attachments.length > 0) {
+        html += `<div class="msg-attachments">`;
+        attachments.forEach(att => {
+           if(att.type === 'image') html += `<img src="${att.data}" class="msg-thumb">`;
+           else html += `<div class="msg-file-icon">📄 ${att.name}</div>`;
+        });
+        html += `</div>`;
+      }
+      if(text) html += `<div class="message">${role === 'assistant' ? marked.parse(text) : text}</div>`;
+      
+      div.innerHTML = html;
+      container.appendChild(div);
+      setTimeout(() => { container.scrollTop = container.scrollHeight; }, 50);
+    }
+
+    function showSingleAnswer(question, answer) {
+       document.getElementById('messages').innerHTML = ''; 
+       activeQuestionContext = question; 
+       addMessage('user', question);
+       addMessage('assistant', answer);
+       if(window.innerWidth <= 768) toggleSidebar(); 
+    }
+
+    function showAllAnswers(encodedDataStr) {
+       const studyDataArray = JSON.parse(decodeURIComponent(encodedDataStr));
+       document.getElementById('messages').innerHTML = ''; 
+       activeQuestionContext = "all batch questions";
+       studyDataArray.forEach((item, i) => { addMessage('user', `Q${i+1}: ${item.question}`); addMessage('assistant', item.answer); });
+       if(window.innerWidth <= 768) toggleSidebar();
+    }
+
+    function buildSidebarDropdown(studyDataArray) {
+       const chatList = document.getElementById('chatList');
+       const groupDiv = document.createElement('div');
+       groupDiv.className = 'study-group';
+       
+       const uniqueId = 'study_' + Date.now();
+       const safeArrayStr = encodeURIComponent(JSON.stringify(studyDataArray));
+       
+       let itemsHtml = '';
+       studyDataArray.forEach((item, index) => {
+          const q = encodeURIComponent(item.question);
+          const a = encodeURIComponent(item.answer);
+          itemsHtml += `<div class="study-q-item" onclick="showSingleAnswer(decodeURIComponent('${q}'), decodeURIComponent('${a}'))">Q${index+1}: ${item.question}</div>`;
+       });
+
+       groupDiv.innerHTML = `<div class="study-header-container"><div class="study-header-text" onclick="showAllAnswers('${safeArrayStr}')">📚 Extracted (${studyDataArray.length})</div><div class="study-toggle" onclick="document.getElementById('${uniqueId}').classList.toggle('open')">▼</div></div><div class="study-items" id="${uniqueId}">${itemsHtml}</div>`;
+       chatList.prepend(groupDiv);
+    }
+
+    async function sendMessage() {
+      const input = document.getElementById('userInput');
+      let text = input.value.trim();
+      
+      if (!text && pendingAttachments.length === 0) return;
+
+      const attToSend = [...pendingAttachments];
+      let queryToSend = text;
+      
+      if (activeQuestionContext && pendingAttachments.length === 0 && text) {
+         queryToSend = `[Regarding: "${activeQuestionContext}"]\nUser asks: ${text}`;
+      }
+
+      addMessage('user', text || "Sent attached files.", attToSend);
+      
+      input.value = ''; 
+      pendingAttachments = [];
+      updatePreview();
+
+      const loadingId = 'loading_' + Date.now();
+      document.getElementById('messages').innerHTML += `<div id="${loadingId}" class="message-wrapper assistant"><div class="message">⏳ Processing...</div></div>`;
+      document.getElementById('messages').scrollTop = document.getElementById('messages').scrollHeight;
+
+      try {
+        const res = await fetch(`${API_BASE_URL}/api/chat/search`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ query: queryToSend, chatId: currentChatId, attachments: attToSend, isStudyMode: isStudyMode })
+        });
+        const data = await res.json();
+        
+        document.getElementById(loadingId).remove();
+
+        if (data.success) {
+          if (data.isStudyMode && data.studyData && data.studyData.length > 0) {
+             addMessage('assistant', `✅ Extracted **${data.studyData.length} questions**. \n- Click **Extracted (${data.studyData.length})** in the sidebar to view.`);
+             buildSidebarDropdown(data.studyData);
+             if(window.innerWidth <= 768) toggleSidebar(); 
+          } else {
+             addMessage('assistant', data.result);
+          }
+        }
+      } catch (err) { 
+        document.getElementById(loadingId)?.remove();
+        addMessage('assistant', "Error connecting to server."); 
+      }
+    }
+    
+    window.onload = () => setMode(false);
+  </script>
 </body>
 </html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Map Explorer</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg:#0d1117; --nav-bg:rgba(13,17,23,0.97); --surface:#161b27; --surface2:#1e2535;
+      --border:rgba(255,255,255,0.09); --text:#e6eaf3; --muted:#7986a0;
+      --river:#38bdf8; --forest:#4ade80; --mountain:#a78bfa; --desert:#fbbf24; --orange:#f97316;
+    }
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;}
+
+    .top-nav{
+      position:fixed;top:0;left:0;right:0;height:52px;
+      background:var(--nav-bg);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);
+      display:flex;align-items:center;gap:10px;padding:0 14px;z-index:5000;
+    }
+    .logo{
+      font-family:'Syne',sans-serif;font-weight:800;font-size:15px;
+      background:linear-gradient(90deg,#38bdf8,#818cf8);
+      -webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;flex-shrink:0;
+    }
+    .nav-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+    .filter-btn{
+      flex-shrink:0;display:flex;align-items:center;gap:7px;
+      font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
+      padding:6px 13px;border-radius:20px;border:1px solid var(--border);
+      background:var(--surface2);color:var(--text);cursor:pointer;transition:all .2s;white-space:nowrap;
+    }
+    .filter-btn:hover{border-color:rgba(255,255,255,.22);}
+    .filter-arrow{font-size:10px;color:var(--muted);transition:transform .2s;margin-left:2px;}
+    .filter-btn.open .filter-arrow{transform:rotate(180deg);}
+    .show-all-btn{
+      flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;
+      padding:5px 13px;border-radius:16px;border:1.5px solid var(--orange);
+      background:rgba(249,115,22,.1);color:var(--orange);cursor:pointer;transition:all .2s;white-space:nowrap;
+    }
+    .show-all-btn:hover,.show-all-btn.active{background:var(--orange);color:#000;}
+    .nav-items{
+      display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none;white-space:nowrap;align-items:center;
+    }
+    .nav-items::-webkit-scrollbar{display:none;}
+    .nav-item-btn{
+      flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;
+      padding:5px 13px;border-radius:16px;border:1px solid var(--border);
+      background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;
+    }
+    .nav-item-btn:hover{color:var(--text);border-color:rgba(255,255,255,.18);}
+    .nav-item-btn.active{color:#000;font-weight:700;}
+    .nav-item-btn.c-river{background:var(--river);border-color:var(--river);}
+    .nav-item-btn.c-forest{background:var(--forest);border-color:var(--forest);}
+    .nav-item-btn.c-mountain{background:var(--mountain);border-color:var(--mountain);}
+    .nav-item-btn.c-desert{background:var(--desert);border-color:var(--desert);}
+    .nav-item-btn.ai-result{border-style:dashed;}
+    .ai-section-label{
+      flex-shrink:0;font-size:10px;font-weight:700;letter-spacing:1px;
+      text-transform:uppercase;color:var(--muted);padding:0 4px;white-space:nowrap;
+    }
+
+    .filter-popup{
+      position:fixed;top:58px;left:14px;background:var(--surface);border:1px solid var(--border);
+      border-radius:14px;padding:10px 8px;z-index:6000;box-shadow:0 20px 50px rgba(0,0,0,.55);
+      display:none;flex-direction:column;gap:4px;min-width:185px;animation:popIn .18s ease;
+    }
+    @keyframes popIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+    .filter-popup.open{display:flex;}
+    .fp-title{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);padding:4px 10px 6px;}
+    .fp-option{
+      display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;
+      font-size:13.5px;font-weight:500;color:var(--text);cursor:pointer;transition:background .15s;
+      border:none;background:transparent;text-align:left;
+    }
+    .fp-option:hover{background:var(--surface2);}
+    .fp-check{font-size:12px;margin-left:auto;opacity:0;}
+    .fp-option.selected .fp-check{opacity:1;}
+    .fp-option.selected.r{color:var(--river);}
+    .fp-option.selected.f{color:var(--forest);}
+    .fp-option.selected.m{color:var(--mountain);}
+    .fp-option.selected.d{color:var(--desert);}
+
+    #map{position:fixed;top:52px;left:0;right:0;bottom:0;z-index:1;}
+
+    /* ── SMALL INFO CARD ── */
+    .info-card{
+      position:fixed;
+      bottom:24px;right:24px;
+      background:rgba(18,23,35,0.97);
+      border:1px solid var(--border);
+      backdrop-filter:blur(16px);
+      border-radius:12px;
+      padding:11px 14px 12px;
+      z-index:4000;
+      display:none;
+      width:210px;
+      cursor:grab;
+      user-select:none;
+      box-shadow:0 10px 32px rgba(0,0,0,.6);
+      animation:cardIn .2s ease;
+    }
+    @keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+    .info-card:active{cursor:grabbing;}
+    .ic-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+    .ic-badge{
+      font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
+      padding:2px 7px;border-radius:4px;
+    }
+    .ic-close{
+      background:none;border:none;color:var(--muted);font-size:15px;
+      cursor:pointer;line-height:1;padding:0;margin-left:auto;margin-right:0;
+    }
+    .ic-close:hover{color:var(--text);}
+    .ic-name{
+      font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
+      margin-bottom:8px;line-height:1.3;color:var(--text);
+    }
+    .ic-rows{display:flex;flex-direction:column;gap:5px;}
+    .ic-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
+    .ic-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);flex-shrink:0;white-space:nowrap;}
+    .ic-val{font-size:11px;color:var(--text);font-weight:500;text-align:right;line-height:1.3;word-break:break-word;}
+
+    /* AI FAB */
+    .ai-fab{
+      position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
+      height:40px;padding:0 20px;border-radius:20px;
+      background:linear-gradient(135deg,#38bdf8,#818cf8);
+      display:flex;align-items:center;gap:7px;
+      font-family:'Syne',sans-serif;font-weight:700;font-size:13px;
+      cursor:pointer;z-index:4500;
+      box-shadow:0 6px 20px rgba(56,189,248,.35);
+      transition:transform .2s,box-shadow .2s;border:none;color:#000;
+    }
+    .ai-fab:hover{transform:translateX(-50%) scale(1.06);box-shadow:0 10px 28px rgba(56,189,248,.5);}
+
+    /* Search modal */
+    .search-overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.72);
+      backdrop-filter:blur(6px);z-index:7000;
+      display:none;align-items:center;justify-content:center;
+    }
+    .search-overlay.open{display:flex;}
+    .search-modal{
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:18px;padding:26px;width:min(500px,92vw);
+      box-shadow:0 30px 80px rgba(0,0,0,.6);animation:scaleIn .18s ease;
+    }
+    @keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
+    .sm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
+    .sm-head h3{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;}
+    .sm-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;}
+    .sm-close:hover{color:var(--text);}
+    .sm-sub{font-size:13px;color:var(--muted);margin-bottom:10px;}
+    .cache-notice{
+      font-size:11.5px;color:var(--muted);margin-bottom:13px;
+      padding:7px 11px;background:rgba(56,189,248,.07);
+      border-radius:8px;border:1px solid rgba(56,189,248,.18);
+      display:flex;align-items:center;gap:6px;
+    }
+    .cache-notice span{color:#38bdf8;font-weight:700;}
+    .sm-row{display:flex;gap:9px;margin-bottom:13px;}
+    .sm-input{
+      flex:1;background:var(--surface2);border:1px solid var(--border);
+      border-radius:10px;padding:11px 15px;
+      font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color .2s;
+    }
+    .sm-input:focus{border-color:rgba(56,189,248,.5);}
+    .sm-input::placeholder{color:var(--muted);}
+    .sm-go{
+      font-family:'Syne',sans-serif;font-weight:700;font-size:14px;
+      padding:11px 20px;border:none;border-radius:10px;
+      background:linear-gradient(135deg,#38bdf8,#818cf8);
+      color:#000;cursor:pointer;transition:opacity .2s;white-space:nowrap;
+    }
+    .sm-go:hover{opacity:.85;}
+    .sm-chips{display:flex;flex-wrap:wrap;gap:7px;}
+    .sm-chip{
+      font-size:12px;padding:5px 11px;border-radius:11px;
+      border:1px solid var(--border);background:var(--surface2);color:var(--muted);
+      cursor:pointer;transition:all .18s;
+    }
+    .sm-chip:hover{color:var(--text);border-color:rgba(255,255,255,.2);}
+
+    .loading-bar{
+      position:fixed;top:0;left:0;right:0;height:3px;
+      background:linear-gradient(90deg,#38bdf8,#818cf8,#4ade80);
+      background-size:200% 100%;z-index:9999;display:none;
+      animation:shimmer 1.2s linear infinite;
+    }
+    @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
+
+    .river-flow{stroke-dasharray:14 10;animation:flow 1.6s linear infinite;}
+    @keyframes flow{from{stroke-dashoffset:48}to{stroke-dashoffset:0}}
+
+    .toast{
+      position:fixed;top:60px;right:16px;
+      background:var(--surface);border:1px solid var(--border);
+      border-radius:10px;padding:10px 16px;font-size:13px;color:var(--text);
+      z-index:6000;display:none;box-shadow:0 10px 30px rgba(0,0,0,.4);
+      max-width:280px;animation:slideInR .25s ease;
+    }
+    @keyframes slideInR{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+    .toast.show{display:block;}
+    .click-away{position:fixed;inset:0;z-index:5500;display:none;}
+    .click-away.on{display:block;}
+  </style>
+</head>
+<body>
+
+<div class="loading-bar" id="loadingBar"></div>
+
+<div class="top-nav">
+  <div class="logo">🌐 AI Map</div>
+  <div class="nav-sep"></div>
+  <button class="filter-btn" id="filterBtn" onclick="toggleFilter()">
+    <span id="filterIcon">🌊</span>
+    <span id="filterLabel">Rivers</span>
+    <span class="filter-arrow">▼</span>
+  </button>
+  <button class="show-all-btn" id="showAllBtn" onclick="toggleAll()">Show All</button>
+  <div class="nav-sep"></div>
+  <div class="nav-items" id="navItems"></div>
+</div>
+
+<div class="filter-popup" id="filterPopup">
+  <div class="fp-title">Map Layer</div>
+  <button class="fp-option selected r" data-cat="rivers"    onclick="selectCategory('rivers',this)">🌊 Rivers    <span class="fp-check">✓</span></button>
+  <button class="fp-option f"          data-cat="forests"   onclick="selectCategory('forests',this)">🌲 Forests   <span class="fp-check">✓</span></button>
+  <button class="fp-option m"          data-cat="mountains" onclick="selectCategory('mountains',this)">⛰️ Mountains <span class="fp-check">✓</span></button>
+  <button class="fp-option d"          data-cat="deserts"   onclick="selectCategory('deserts',this)">🏜️ Deserts   <span class="fp-check">✓</span></button>
+</div>
+<div class="click-away" id="clickAway" onclick="closeFilter()"></div>
+
+<div id="map"></div>
+
+<!-- SMALL INFO CARD -->
+<div class="info-card" id="infoCard">
+  <div class="ic-top">
+    <div class="ic-badge" id="icBadge"></div>
+    <button class="ic-close" onclick="closeInfo()">×</button>
+  </div>
+  <div class="ic-name" id="icName"></div>
+  <div class="ic-rows">
+    <div class="ic-row"><span class="ic-label" id="icL1">Origin</span><span class="ic-val" id="icV1">—</span></div>
+    <div class="ic-row"><span class="ic-label" id="icL2">Ends</span><span class="ic-val" id="icV2">—</span></div>
+    <div class="ic-row"><span class="ic-label" id="icL3">Length</span><span class="ic-val" id="icV3">—</span></div>
+    <div class="ic-row"><span class="ic-label" id="icL4">Region</span><span class="ic-val" id="icV4">—</span></div>
+  </div>
+</div>
+
+<button class="ai-fab" onclick="openSearch()" title="Ctrl+K">✦ AI Search</button>
+
+<div class="toast" id="toast"></div>
+
+<div class="search-overlay" id="searchOverlay" onclick="overlayBg(event)">
+  <div class="search-modal">
+    <div class="sm-head">
+      <h3>✦ AI Search</h3>
+      <button class="sm-close" onclick="closeSearch()">×</button>
+    </div>
+    <p class="sm-sub">Koi bhi river, forest, mountain ya desert — AI map par dikhayega.</p>
+    <div class="cache-notice">💾 Cache: <span id="cacheCount">0</span> saved results — instant load honge</div>
+    <div class="sm-row">
+      <input class="sm-input" id="searchQuery" placeholder="e.g. 10 Pakistan rivers, Sahara, Alps..." />
+      <button class="sm-go" onclick="doAISearch()">Search →</button>
+    </div>
+    <div class="sm-chips">
+      <span class="sm-chip" onclick="setChip(this)">Ganga</span>
+      <span class="sm-chip" onclick="setChip(this)">Top 5 Indian Rivers</span>
+      <span class="sm-chip" onclick="setChip(this)">10 Pakistan Rivers</span>
+      <span class="sm-chip" onclick="setChip(this)">Amazon Rainforest</span>
+      <span class="sm-chip" onclick="setChip(this)">Sahara Desert</span>
+      <span class="sm-chip" onclick="setChip(this)">Andes Mountains</span>
+      <span class="sm-chip" onclick="setChip(this)">Thar Desert</span>
+      <span class="sm-chip" onclick="setChip(this)">Congo Rainforest</span>
+      <span class="sm-chip" onclick="setChip(this)">Himalayas</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-polylinedecorator/1.6.0/leaflet.polylineDecorator.min.js"></script>
+<script>
+// ══════════════════════════════════════════════
+// LOCAL DB
+// ══════════════════════════════════════════════
+const DB = {
+  rivers: {
+    "Ganga":       { name:"Ganga",        color:"#38bdf8", path:[[30.98,78.92],[29.95,78.17],[27.47,79.92],[26.85,80.92],[25.45,81.88],[25.32,83.01],[25.57,85.13],[24.87,87.95],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" },
+    "Yamuna":      { name:"Yamuna",       color:"#67e8f9", path:[[31.01,78.45],[30.37,78.07],[29.42,77.67],[28.66,77.22],[27.18,78.02],[26.47,79.92],[25.43,81.88]], origin:"Yamunotri, Uttarakhand", dest:"Prayagraj", length:"1,376 km", region:"North India" },
+    "Narmada":     { name:"Narmada",      color:"#06b6d4", path:[[22.67,81.76],[22.95,80.45],[22.75,79.20],[22.30,77.42],[22.03,76.10],[21.77,74.45],[21.52,73.38],[21.72,72.68]], origin:"Amarkantak, MP", dest:"Gulf of Khambhat", length:"1,312 km", region:"Central India" },
+    "Godavari":    { name:"Godavari",     color:"#0ea5e9", path:[[19.97,73.78],[19.38,74.72],[19.12,76.55],[18.43,79.50],[17.88,80.78],[17.00,81.55],[16.52,82.23]], origin:"Trimbakeshwar, Maharashtra", dest:"Bay of Bengal", length:"1,465 km", region:"Peninsular India" },
+    "Krishna":     { name:"Krishna",      color:"#60a5fa", path:[[17.08,73.82],[16.85,75.23],[16.22,76.48],[15.72,78.30],[16.52,80.35],[16.12,81.45],[15.72,80.87]], origin:"Mahabaleshwar, Maharashtra", dest:"Bay of Bengal", length:"1,400 km", region:"Peninsular India" },
+    "Brahmaputra": { name:"Brahmaputra",  color:"#2dd4bf", path:[[29.80,93.50],[27.88,94.80],[26.18,91.77],[25.58,90.05],[24.88,89.42],[23.73,89.65],[23.10,90.50]], origin:"Kailash, Tibet", dest:"Bay of Bengal", length:"2,900 km", region:"Northeast India" },
+    "Mahanadi":    { name:"Mahanadi",     color:"#93c5fd", path:[[21.58,83.05],[20.77,82.22],[20.25,82.72],[20.88,84.12],[20.22,85.88],[19.88,86.57]], origin:"Dhamtari, Chhattisgarh", dest:"Bay of Bengal", length:"858 km", region:"East India" },
+    "Cauvery":     { name:"Cauvery",      color:"#22d3ee", path:[[12.33,75.57],[12.17,76.05],[11.87,77.03],[11.42,77.72],[10.92,78.78],[10.57,79.43],[11.13,79.85]], origin:"Talakaveri, Karnataka", dest:"Bay of Bengal", length:"800 km", region:"South India" },
+    "Indus":       { name:"Indus",        color:"#818cf8", path:[[32.50,79.50],[33.98,77.58],[34.48,72.92],[31.55,72.62],[30.18,71.48],[27.70,68.62],[24.10,67.45]], origin:"Tibet (Kailash)", dest:"Arabian Sea", length:"3,180 km", region:"Pakistan/India" },
+    "Tapti":       { name:"Tapti",        color:"#7dd3fc", path:[[21.77,78.12],[21.32,77.22],[21.08,76.15],[21.17,75.05],[21.08,73.38],[21.17,72.85]], origin:"Multai, Betul MP", dest:"Gulf of Khambhat", length:"724 km", region:"Central/West India" }
+  },
+  forests: {
+    "Jim Corbett NP":  { name:"Jim Corbett NP",       latlng:[29.53,78.77], radius:35000, color:"#4ade80", origin:"Uttarakhand", dest:"Tiger Reserve", length:"520 sq km", region:"North India" },
+    "Sundarbans":      { name:"Sundarbans",            latlng:[21.95,88.68], radius:55000, color:"#22c55e", origin:"West Bengal",    dest:"UNESCO Mangrove", length:"10,000 sq km", region:"East India" },
+    "Kanha Reserve":   { name:"Kanha Tiger Reserve",  latlng:[22.33,80.61], radius:45000, color:"#86efac", origin:"Madhya Pradesh", dest:"National Park", length:"940 sq km", region:"Central India" },
+    "Nagarhole NP":    { name:"Nagarhole NP",          latlng:[11.97,76.10], radius:30000, color:"#16a34a", origin:"Karnataka",      dest:"Wildlife Sanctuary", length:"642 sq km", region:"South India" },
+    "Kaziranga":       { name:"Kaziranga NP",          latlng:[26.58,93.17], radius:32000, color:"#4ade80", origin:"Assam",          dest:"Rhino Reserve", length:"430 sq km", region:"Northeast India" },
+    "Gir Forest":      { name:"Gir Forest NP",         latlng:[21.13,70.80], radius:30000, color:"#15803d", origin:"Gujarat",        dest:"Asiatic Lion Reserve", length:"1,412 sq km", region:"West India" }
+  },
+  mountains: {
+    "Himalayas":     { name:"Himalayas",       color:"#a78bfa", path:[[34.0,74.0],[32.5,76.5],[31.0,79.5],[29.5,82.0],[28.0,85.0],[27.5,88.0],[27.0,91.5],[28.0,95.0]], origin:"Kashmir", dest:"Arunachal Pradesh", length:"2,400 km", region:"North India/Nepal" },
+    "Western Ghats": { name:"Western Ghats",  color:"#c4b5fd", path:[[21.5,73.5],[20.0,73.0],[18.5,73.8],[16.0,74.5],[13.0,75.5],[11.0,76.5],[8.5,77.0]], origin:"Gujarat border", dest:"Kerala", length:"1,600 km", region:"West/South India" },
+    "Eastern Ghats": { name:"Eastern Ghats",  color:"#8b5cf6", path:[[19.5,85.5],[17.5,82.5],[15.5,79.5],[13.5,79.0],[12.0,78.5]], origin:"Odisha", dest:"Tamil Nadu", length:"1,750 km", region:"East/South India" },
+    "Vindhya Range": { name:"Vindhya Range",  color:"#7c3aed", path:[[22.0,75.0],[23.0,78.0],[24.0,80.5],[24.5,82.5]], origin:"Gujarat/MP border", dest:"Mirzapur, UP", length:"1,050 km", region:"Central India" },
+    "Aravallis":     { name:"Aravalli Range", color:"#ddd6fe", path:[[24.58,73.68],[25.5,74.5],[26.8,75.5],[28.0,76.5],[28.63,77.22]], origin:"Gujarat", dest:"Delhi", length:"800 km", region:"Rajasthan/Delhi" }
+  },
+  deserts: {
+    "Thar Desert":        { name:"Thar Desert",        latlng:[26.92,70.90], radius:200000, color:"#fbbf24", origin:"Rajasthan, India", dest:"Sindh, Pakistan",       length:"200,000 sq km", region:"NW India/Pakistan" },
+    "Ladakh Cold Desert": { name:"Ladakh Cold Desert", latlng:[34.15,77.57], radius:80000,  color:"#fde68a", origin:"Leh, Ladakh",      dest:"High Altitude Plateau", length:"45,000 sq km",  region:"North India" },
+    "Spiti Valley":       { name:"Spiti Valley",       latlng:[32.25,78.05], radius:35000,  color:"#f59e0b", origin:"Himachal Pradesh", dest:"Cold Desert",           length:"7,000 sq km",   region:"North India" }
+  }
+};
+
+const CAT_META = {
+  rivers:    { icon:"🌊", label:"Rivers",    color:"#38bdf8", cls:"river",    lbs:["Origin","Flows To","Length","Region"] },
+  forests:   { icon:"🌲", label:"Forests",   color:"#4ade80", cls:"forest",   lbs:["State","Type","Area","Region"] },
+  mountains: { icon:"⛰️", label:"Mountains", color:"#a78bfa", cls:"mountain", lbs:["Start","End","Length","Region"] },
+  deserts:   { icon:"🏜️", label:"Deserts",   color:"#fbbf24", cls:"desert",   lbs:["Location","Type","Area","Region"] },
+};
+
+// ══════════════════════════════════════════════
+// LOCALSTORAGE CACHE
+// ══════════════════════════════════════════════
+const CACHE_KEY = 'aimap_cache_v1';
+
+const PRESET_CACHE = {
+  "top 5 indian rivers": { type:"rivers", ts:0, items:[
+    { name:"Ganga",    color:"#38bdf8", isRiver:true, path:[[30.98,78.92],[27.47,79.92],[25.32,83.01],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" },
+    { name:"Yamuna",   color:"#67e8f9", isRiver:true, path:[[31.01,78.45],[29.42,77.67],[27.18,78.02],[25.43,81.88]], origin:"Yamunotri, Uttarakhand", dest:"Prayagraj (Sangam)", length:"1,376 km", region:"North India" },
+    { name:"Narmada",  color:"#06b6d4", isRiver:true, path:[[22.67,81.76],[22.75,79.20],[21.77,74.45],[21.72,72.68]], origin:"Amarkantak, MP", dest:"Gulf of Khambhat", length:"1,312 km", region:"Central India" },
+    { name:"Godavari", color:"#0ea5e9", isRiver:true, path:[[19.97,73.78],[19.12,76.55],[17.88,80.78],[16.52,82.23]], origin:"Trimbakeshwar, Maharashtra", dest:"Bay of Bengal", length:"1,465 km", region:"Peninsular India" },
+    { name:"Krishna",  color:"#a78bfa", isRiver:true, path:[[17.08,73.82],[16.22,76.48],[16.52,80.35],[15.72,80.87]], origin:"Mahabaleshwar, Maharashtra", dest:"Bay of Bengal", length:"1,400 km", region:"Peninsular India" }
+  ]},
+  "ganga": { type:"rivers", ts:0, items:[
+    { name:"Ganga", color:"#38bdf8", isRiver:true, path:[[30.98,78.92],[29.95,78.17],[27.47,79.92],[26.85,80.92],[25.45,81.88],[25.32,83.01],[25.57,85.13],[24.87,87.95],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" }
+  ]},
+  "thar desert": { type:"deserts", ts:0, items:[
+    { name:"Thar Desert", latlng:[26.92,70.90], radius:200000, color:"#fbbf24", origin:"Rajasthan, India", dest:"Sindh, Pakistan", length:"200,000 sq km", region:"NW India/Pakistan" }
+  ]},
+  "sahara desert": { type:"deserts", ts:0, items:[
+    { name:"Sahara Desert", latlng:[23.00,12.00], radius:2500000, color:"#f59e0b", origin:"Morocco/Algeria", dest:"Sudan/Egypt", length:"9,200,000 sq km", region:"North Africa" }
+  ]},
+  "himalayas": { type:"mountains", ts:0, items:[
+    { name:"Himalayas", color:"#a78bfa", path:[[34.0,74.0],[32.5,76.5],[31.0,79.5],[29.5,82.0],[28.0,85.0],[27.5,88.0],[27.0,91.5],[28.0,95.0]], origin:"Kashmir", dest:"Arunachal Pradesh", length:"2,400 km", region:"North India/Nepal" }
+  ]},
+  "andes mountains": { type:"mountains", ts:0, items:[
+    { name:"Andes Mountains", color:"#c4b5fd", path:[[11.0,-72.0],[5.0,-74.0],[-1.0,-77.0],[-8.0,-77.5],[-16.0,-72.0],[-23.0,-67.0],[-33.0,-70.5],[-44.0,-72.0],[-52.0,-73.0]], origin:"Venezuela/Colombia", dest:"Patagonia, Argentina", length:"7,000 km", region:"South America" }
+  ]},
+  "amazon rainforest": { type:"forests", ts:0, items:[
+    { name:"Amazon Rainforest", latlng:[-3.50,-60.00], radius:2800000, color:"#4ade80", origin:"Brazil/Peru/Colombia", dest:"World's Largest Forest", length:"5,500,000 sq km", region:"South America" }
+  ]},
+  "congo rainforest": { type:"forests", ts:0, items:[
+    { name:"Congo Rainforest", latlng:[-1.00,23.00], radius:1800000, color:"#22c55e", origin:"DRC, Republic of Congo", dest:"2nd Largest Rainforest", length:"3,300,000 sq km", region:"Central Africa" }
+  ]}
+};
+
+function loadCache(){ try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}'); }catch(e){ return {}; } }
+function saveCache(c){ try{ localStorage.setItem(CACHE_KEY,JSON.stringify(c)); }catch(e){} }
+function getCached(q){ return loadCache()[q.toLowerCase().trim()]||null; }
+function setCache(q,type,items){
+  const c=loadCache(); c[q.toLowerCase().trim()]={type,items,ts:Date.now()}; saveCache(c); updateCacheCount();
+}
+function updateCacheCount(){
+  const el=document.getElementById('cacheCount'); if(el) el.textContent=Object.keys(loadCache()).length;
+}
+function initCache(){
+  const c=loadCache(); let added=0;
+  Object.keys(PRESET_CACHE).forEach(k=>{ if(!c[k]){ c[k]=PRESET_CACHE[k]; added++; } });
+  if(added) saveCache(c);
+  updateCacheCount();
+}
+
+// ══════════════════════════════════════════════
+// MAP
+// ══════════════════════════════════════════════
+const map = L.map('map',{zoomControl:false}).setView([22.5,78.0],5);
+L.control.zoom({position:'topright'}).addTo(map);
+L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+  attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:20
+}).addTo(map);
+
+let layerGroup=L.layerGroup().addTo(map);
+let activeCategory='rivers';
+let isAllShowing=false;
+let aiResults=[];
+
+// ── FILTER ──
+function toggleFilter(){
+  const p=document.getElementById('filterPopup'),b=document.getElementById('filterBtn'),ca=document.getElementById('clickAway');
+  const open=p.classList.toggle('open');
+  b.classList.toggle('open',open); ca.classList.toggle('on',open);
+}
+function closeFilter(){
+  document.getElementById('filterPopup').classList.remove('open');
+  document.getElementById('filterBtn').classList.remove('open');
+  document.getElementById('clickAway').classList.remove('on');
+}
+function selectCategory(cat,el){
+  closeFilter(); activeCategory=cat; aiResults=[];
+  document.querySelectorAll('.fp-option').forEach(o=>o.classList.remove('selected'));
+  el.classList.add('selected');
+  const m=CAT_META[cat];
+  document.getElementById('filterIcon').textContent=m.icon;
+  document.getElementById('filterLabel').textContent=m.label;
+  renderNav();
+  setTimeout(()=>{ isAllShowing=false; toggleAll(); },100);
+}
+
+// ── NAV ──
+function renderNav(){
+  const strip=document.getElementById('navItems');
+  strip.innerHTML=''; isAllShowing=false; closeInfo();
+  const m=CAT_META[activeCategory];
+  document.getElementById('showAllBtn').textContent=`Show All ${m.label}`;
+  document.getElementById('showAllBtn').classList.remove('active');
+  Object.keys(DB[activeCategory]).forEach(name=>strip.appendChild(makeBtn(name,name,false)));
+  if(aiResults.length){
+    const sep=document.createElement('span'); sep.className='ai-section-label'; sep.textContent='— AI Results';
+    strip.appendChild(sep);
+    aiResults.forEach((r,i)=>{ const btn=makeBtn(r.name,r.name,true); btn.dataset.aiIdx=i; strip.appendChild(btn); });
+  }
+}
+function makeBtn(label,key,isAI){
+  const btn=document.createElement('button');
+  btn.className='nav-item-btn'+(isAI?' ai-result':'');
+  btn.textContent=label;
+  btn.onclick=()=>{ isAI?drawSingleAI(parseInt(btn.dataset.aiIdx),btn):drawSingleLocal(key,btn); };
+  return btn;
+}
+
+// ── DRAW LOCAL ──
+function drawSingleLocal(name,btn){
+  layerGroup.clearLayers(); closeInfo(); isAllShowing=false; clearActive();
+  btn.classList.add('active','c-'+CAT_META[activeCategory].cls);
+  document.getElementById('showAllBtn').classList.remove('active');
+  const item=DB[activeCategory][name];
+  if(item.path){ const l=drawPath(item,false); map.fitBounds(l.getBounds(),{padding:[90,90]}); }
+  else { drawCircle(item,false); map.setView(item.latlng,7); }
+  showInfo(item,activeCategory);
+}
+function toggleAll(){
+  isAllShowing=!isAllShowing; layerGroup.clearLayers(); closeInfo(); clearActive();
+  const allBtn=document.getElementById('showAllBtn'), m=CAT_META[activeCategory];
+  if(isAllShowing){
+    allBtn.classList.add('active'); allBtn.textContent=`Hide ${m.label}`;
+    Object.values(DB[activeCategory]).forEach(item=>{ item.path?drawPath(item,true):drawCircle(item,true); });
+    aiResults.forEach(r=>{ r.item.path?.length>1?drawPathRaw(r.item,true):r.item.latlng&&drawCircleRaw(r.item,true); });
+    map.setView([22.5,78.0],5);
+  } else {
+    allBtn.classList.remove('active'); allBtn.textContent=`Show All ${m.label}`;
+  }
+}
+function clearActive(){
+  document.querySelectorAll('.nav-item-btn').forEach(b=>b.classList.remove('active','c-river','c-forest','c-mountain','c-desert'));
+}
+
+// ── DRAW AI ──
+function drawSingleAI(idx,btn){
+  layerGroup.clearLayers(); closeInfo(); isAllShowing=false; clearActive();
+  btn.classList.add('active','c-'+CAT_META[activeCategory].cls);
+  document.getElementById('showAllBtn').classList.remove('active');
+  const r=aiResults[idx]; if(!r) return;
+  if(r.item.path?.length>1){ const l=drawPathRaw(r.item,false); map.fitBounds(l.getBounds(),{padding:[90,90]}); }
+  else if(r.item.latlng){ drawCircleRaw(r.item,false); map.setView(r.item.latlng,7); }
+  showInfo(r.item,activeCategory);
+}
+
+// ── DRAW PRIMITIVES ──
+function drawPath(item,thin){ return drawPathRaw(item,thin); }
+function drawPathRaw(item,thin){
+  const w=thin?2.8:5.5;
+  const line=L.polyline(item.path,{color:item.color||'#38bdf8',weight:w,opacity:.92}).addTo(layerGroup);
+  if(activeCategory==='rivers'||item.isRiver)
+    L.polyline(item.path,{color:'#fff',weight:thin?1.4:2.3,opacity:.5,className:'river-flow'}).addTo(layerGroup);
+  if(typeof L.polylineDecorator!=='undefined')
+    L.polylineDecorator(line,{patterns:[{offset:'5%',repeat:thin?280:140,
+      symbol:L.Symbol.arrowHead({pixelSize:thin?7:12,polygon:false,
+        pathOptions:{stroke:true,color:'#fff',weight:thin?1.5:2.2,opacity:.8}})}]}).addTo(layerGroup);
+  return line;
+}
+function drawCircle(item,thin){ drawCircleRaw(item,thin); }
+function drawCircleRaw(item,thin){
+  L.circle(item.latlng,{
+    color:item.color||'#38bdf8',fillColor:item.color||'#38bdf8',
+    fillOpacity:thin?.12:.22,weight:thin?1.5:2.5,opacity:thin?.45:.8,radius:item.radius||50000
+  }).addTo(layerGroup);
+}
+
+// ══════════════════════════════════════════════
+// INFO CARD — SMALL + DRAG SIRF POSITION MOVE KARE
+// ══════════════════════════════════════════════
+function showInfo(item,cat){
+  const m=CAT_META[cat];
+  const badge=document.getElementById('icBadge');
+  badge.textContent=m.label.replace(/s$/,'');
+  badge.style.cssText=`background:${m.color}22;color:${m.color};`;
+  document.getElementById('icName').textContent=item.name||'—';
+  m.lbs.forEach((l,i)=>document.getElementById('icL'+(i+1)).textContent=l);
+  document.getElementById('icV1').textContent=item.origin||'—';
+  document.getElementById('icV2').textContent=item.dest||'—';
+  document.getElementById('icV3').textContent=item.length||'—';
+  document.getElementById('icV4').textContent=item.region||'—';
+
+  const card=document.getElementById('infoCard');
+  // Agar user ne drag nahi kiya — default position reset karo
+  if(!card._dragged){
+    card.style.cssText='display:block;position:fixed;bottom:24px;right:24px;top:auto;left:auto;transform:none;';
+  } else {
+    card.style.display='block'; // sirf visible karo, position mat chhedo
+  }
+}
+
+function closeInfo(){
+  const card=document.getElementById('infoCard');
+  card.style.display='none';
+  card._dragged=false; // close pe reset karo taaki next baar default position mile
+}
+
+// DRAG — sirf position change, data nahi
+(function(){
+  const el=document.getElementById('infoCard');
+  let sx=0,sy=0,dragging=false;
+  el.addEventListener('mousedown',e=>{
+    if(e.target.classList.contains('ic-close')) return;
+    e.preventDefault(); dragging=true;
+    const rect=el.getBoundingClientRect();
+    sx=e.clientX-rect.left; sy=e.clientY-rect.top;
+    // Absolute positioning pe switch
+    el.style.left=rect.left+'px'; el.style.top=rect.top+'px';
+    el.style.right='auto'; el.style.bottom='auto'; el.style.transform='none';
+    el._dragged=true;
+    document.onmousemove=e=>{
+      if(!dragging) return;
+      el.style.left=(e.clientX-sx)+'px';
+      el.style.top=(e.clientY-sy)+'px';
+    };
+    document.onmouseup=()=>{ dragging=false; document.onmousemove=null; document.onmouseup=null; };
+  });
+})();
+
+// ── AI SEARCH ──
+function openSearch(){ updateCacheCount(); document.getElementById('searchOverlay').classList.add('open'); setTimeout(()=>document.getElementById('searchQuery').focus(),80); }
+function closeSearch(){ document.getElementById('searchOverlay').classList.remove('open'); }
+function overlayBg(e){ if(e.target.id==='searchOverlay') closeSearch(); }
+function setChip(el){ document.getElementById('searchQuery').value=el.textContent; document.getElementById('searchQuery').focus(); }
+function updateFilterUI(cat){
+  const m=CAT_META[cat]||CAT_META.rivers;
+  document.getElementById('filterIcon').textContent=m.icon;
+  document.getElementById('filterLabel').textContent=m.label;
+  document.querySelectorAll('.fp-option').forEach(o=>{ o.classList.remove('selected'); if(o.dataset.cat===cat) o.classList.add('selected'); });
+}
+
+async function doAISearch(){
+  const query=document.getElementById('searchQuery').value.trim();
+  if(!query){ showToast('⚠️ Kuch likho pehle!'); return; }
+  closeSearch();
+
+  // ── CACHE FIRST ──
+  const cached=getCached(query);
+  if(cached){ showToast(`💾 Cache se load: "${query}"`); loadFromCache(cached); return; }
+
+  // ── API CALL ──
+  showLoading(true);
+  try{
+    const res=await fetch('https://gemini-chatall.onrender.com/api/map/search',{
+      method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({river:query})
+    });
+    const data=await res.json();
+    if(!data.success) throw new Error(data.message||'Failed');
+    const result=data.data; layerGroup.clearLayers(); closeInfo();
+    const newAI=[]; const COLORS=['#38bdf8','#67e8f9','#06b6d4','#0ea5e9','#60a5fa','#2dd4bf','#22d3ee','#93c5fd','#818cf8','#a78bfa','#4ade80','#fbbf24'];
+
+    if(result.rivers?.length){
+      activeCategory='rivers'; updateFilterUI('rivers');
+      const bounds=[];
+      result.rivers.forEach((r,i)=>{
+        const item={ name:r.name, color:r.color||COLORS[i%COLORS.length], path:r.path, isRiver:true,
+          origin:r.source?.name||r.origin||'—', dest:r.mouth?.name||r.dest||'—',
+          length:r.length_km?r.length_km+' km':'—', region:r.region||'—' };
+        if(r.path?.length>1) drawPathRaw(item,false);
+        if(r.source) L.circleMarker([r.source.lat,r.source.lng],{radius:5,color:item.color,fillColor:'#fff',fillOpacity:1,weight:2}).bindPopup(`<b>${r.name}</b><br>${r.source.name}`).addTo(layerGroup);
+        if(r.mouth)  L.circleMarker([r.mouth.lat,r.mouth.lng], {radius:5,color:item.color,fillColor:'#111',fillOpacity:.9,weight:2}).bindPopup(`<b>${r.name}</b><br>${r.mouth.name}`).addTo(layerGroup);
+        newAI.push({name:r.name,item});
+        if(r.path?.length>1) bounds.push(L.polyline(r.path).getBounds());
+      });
+      if(bounds.length){ const b=bounds.reduce((a,c)=>a.extend(c),bounds[0]); map.fitBounds(b,{padding:[70,70]}); }
+      setCache(query,'rivers',newAI.map(r=>r.item));
+    } else if(result.items?.length){
+      const cat=data.type||activeCategory; activeCategory=cat; updateFilterUI(cat);
+      result.items.forEach((itm,i)=>{
+        const item={...itm,color:itm.color||COLORS[i%COLORS.length]};
+        if(item.path?.length>1) drawPathRaw(item,false); else if(item.latlng) drawCircleRaw(item,false);
+        newAI.push({name:itm.name,item});
+      });
+      setCache(query,cat,newAI.map(r=>r.item));
+    }
+    aiResults=newAI; renderNav();
+    showToast(`✦ ${newAI.length} result(s) — "${query}"`);
+    if(newAI.length===1){ const f=document.querySelector('.nav-item-btn.ai-result'); if(f) f.click(); }
+  } catch(err){ showToast('❌ '+err.message); }
+  finally{ showLoading(false); }
+}
+
+function loadFromCache(cached){
+  layerGroup.clearLayers(); closeInfo();
+  const cat=cached.type||'rivers'; activeCategory=cat; updateFilterUI(cat);
+  const newAI=[];
+  cached.items.forEach(item=>{
+    if(item.path?.length>1) drawPathRaw(item,false); else if(item.latlng) drawCircleRaw(item,false);
+    newAI.push({name:item.name,item});
+  });
+  const paths=cached.items.filter(i=>i.path?.length>1);
+  if(paths.length){ const b=paths.map(i=>L.polyline(i.path).getBounds()).reduce((a,c)=>a.extend(c)); map.fitBounds(b,{padding:[70,70]}); }
+  else if(cached.items[0]?.latlng) map.setView(cached.items[0].latlng,5);
+  aiResults=newAI; renderNav();
+  showToast(`💾 ${newAI.length} results — cache se`);
+  if(newAI.length===1){ const f=document.querySelector('.nav-item-btn.ai-result'); if(f) f.click(); }
+}
+
+// ── UTILS ──
+function showLoading(on){ document.getElementById('loadingBar').style.display=on?'block':'none'; }
+let toastT;
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3500); }
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){ closeSearch(); closeFilter(); }
+  if((e.ctrlKey||e.metaKey)&&e.key==='k'){ e.preventDefault(); openSearch(); }
+});
+document.getElementById('searchQuery').addEventListener('keypress',e=>{ if(e.key==='Enter') doAISearch(); });
+
+// ── BOOT ──
+initCache();
+renderNav();
+setTimeout(()=>{ toggleAll(); },300);
+</script>
+</body>
+</html>

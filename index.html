@@ -2,7 +2,7 @@
 <html lang="hi">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>AI Map Explorer</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
@@ -11,14 +11,16 @@
       --bg:#0d1117; --nav-bg:rgba(13,17,23,0.97); --surface:#161b27; --surface2:#1e2535;
       --border:rgba(255,255,255,0.09); --text:#e6eaf3; --muted:#7986a0;
       --river:#38bdf8; --forest:#4ade80; --mountain:#a78bfa; --desert:#fbbf24; --orange:#f97316;
+      --nav-h:52px; --bottom-h:62px;
     }
-    *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;}
+    *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+    body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;height:100dvh;}
 
+    /* ════════════════════ TOP NAV ════════════════════ */
     .top-nav{
-      position:fixed;top:0;left:0;right:0;height:52px;
+      position:fixed;top:0;left:0;right:0;height:var(--nav-h);
       background:var(--nav-bg);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);
-      display:flex;align-items:center;gap:10px;padding:0 14px;z-index:5000;
+      display:flex;align-items:center;gap:8px;padding:0 12px;z-index:5000;
     }
     .logo{
       font-family:'Syne',sans-serif;font-weight:800;font-size:15px;
@@ -26,29 +28,34 @@
       -webkit-background-clip:text;-webkit-text-fill-color:transparent;white-space:nowrap;flex-shrink:0;
     }
     .nav-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
+
+    /* Category filter button */
     .filter-btn{
-      flex-shrink:0;display:flex;align-items:center;gap:7px;
+      flex-shrink:0;display:flex;align-items:center;gap:6px;
       font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
-      padding:6px 13px;border-radius:20px;border:1px solid var(--border);
+      padding:6px 12px;border-radius:20px;border:1px solid var(--border);
       background:var(--surface2);color:var(--text);cursor:pointer;transition:all .2s;white-space:nowrap;
     }
-    .filter-btn:hover{border-color:rgba(255,255,255,.22);}
     .filter-arrow{font-size:10px;color:var(--muted);transition:transform .2s;margin-left:2px;}
     .filter-btn.open .filter-arrow{transform:rotate(180deg);}
+
+    /* Show All button — hidden on mobile (bottom bar mein hai) */
     .show-all-btn{
       flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;
-      padding:5px 13px;border-radius:16px;border:1.5px solid var(--orange);
+      padding:5px 12px;border-radius:16px;border:1.5px solid var(--orange);
       background:rgba(249,115,22,.1);color:var(--orange);cursor:pointer;transition:all .2s;white-space:nowrap;
     }
     .show-all-btn:hover,.show-all-btn.active{background:var(--orange);color:#000;}
+
+    /* Desktop horizontal nav items */
     .nav-items{
       display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none;white-space:nowrap;align-items:center;
     }
     .nav-items::-webkit-scrollbar{display:none;}
     .nav-item-btn{
       flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:500;
-      padding:5px 13px;border-radius:16px;border:1px solid var(--border);
-      background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;
+      padding:5px 12px;border-radius:16px;border:1px solid var(--border);
+      background:transparent;color:var(--muted);cursor:pointer;transition:all .2s;touch-action:manipulation;
     }
     .nav-item-btn:hover{color:var(--text);border-color:rgba(255,255,255,.18);}
     .nav-item-btn.active{color:#000;font-weight:700;}
@@ -62,8 +69,9 @@
       text-transform:uppercase;color:var(--muted);padding:0 4px;white-space:nowrap;
     }
 
+    /* ════════════════════ FILTER POPUP ════════════════════ */
     .filter-popup{
-      position:fixed;top:58px;left:14px;background:var(--surface);border:1px solid var(--border);
+      position:fixed;top:58px;left:12px;background:var(--surface);border:1px solid var(--border);
       border-radius:14px;padding:10px 8px;z-index:6000;box-shadow:0 20px 50px rgba(0,0,0,.55);
       display:none;flex-direction:column;gap:4px;min-width:185px;animation:popIn .18s ease;
     }
@@ -71,11 +79,11 @@
     .filter-popup.open{display:flex;}
     .fp-title{font-size:10px;text-transform:uppercase;letter-spacing:1.2px;color:var(--muted);padding:4px 10px 6px;}
     .fp-option{
-      display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;
-      font-size:13.5px;font-weight:500;color:var(--text);cursor:pointer;transition:background .15s;
-      border:none;background:transparent;text-align:left;
+      display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:9px;
+      font-size:14px;font-weight:500;color:var(--text);cursor:pointer;transition:background .15s;
+      border:none;background:transparent;text-align:left;touch-action:manipulation;
     }
-    .fp-option:hover{background:var(--surface2);}
+    .fp-option:hover,.fp-option:active{background:var(--surface2);}
     .fp-check{font-size:12px;margin-left:auto;opacity:0;}
     .fp-option.selected .fp-check{opacity:1;}
     .fp-option.selected.r{color:var(--river);}
@@ -83,47 +91,128 @@
     .fp-option.selected.m{color:var(--mountain);}
     .fp-option.selected.d{color:var(--desert);}
 
-    #map{position:fixed;top:52px;left:0;right:0;bottom:0;z-index:1;}
+    /* ════════════════════ MAP ════════════════════ */
+    #map{
+      position:fixed;top:var(--nav-h);left:0;right:0;z-index:1;
+      bottom:0; /* desktop */
+    }
 
-    /* ── SMALL INFO CARD ── */
+    /* ════════════════════ INFO CARD — Desktop ════════════════════ */
     .info-card{
-      position:fixed;
-      bottom:24px;right:24px;
-      background:rgba(18,23,35,0.97);
-      border:1px solid var(--border);
-      backdrop-filter:blur(16px);
-      border-radius:12px;
-      padding:11px 14px 12px;
-      z-index:4000;
-      display:none;
-      width:210px;
-      cursor:grab;
-      user-select:none;
-      box-shadow:0 10px 32px rgba(0,0,0,.6);
-      animation:cardIn .2s ease;
+      position:fixed;bottom:24px;right:24px;
+      background:rgba(18,23,35,0.97);border:1px solid var(--border);
+      backdrop-filter:blur(16px);border-radius:12px;padding:11px 14px 12px;
+      z-index:4000;display:none;width:215px;
+      cursor:grab;user-select:none;
+      box-shadow:0 10px 32px rgba(0,0,0,.6);animation:cardIn .2s ease;
     }
     @keyframes cardIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
     .info-card:active{cursor:grabbing;}
-    .ic-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
-    .ic-badge{
-      font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;
-      padding:2px 7px;border-radius:4px;
-    }
-    .ic-close{
-      background:none;border:none;color:var(--muted);font-size:15px;
-      cursor:pointer;line-height:1;padding:0;margin-left:auto;margin-right:0;
-    }
+    .ic-top{display:flex;align-items:center;gap:6px;margin-bottom:7px;}
+    .ic-badge{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 7px;border-radius:4px;}
+    .ic-close{background:none;border:none;color:var(--muted);font-size:16px;cursor:pointer;margin-left:auto;line-height:1;padding:2px 4px;}
     .ic-close:hover{color:var(--text);}
-    .ic-name{
-      font-family:'Syne',sans-serif;font-size:13px;font-weight:700;
-      margin-bottom:8px;line-height:1.3;color:var(--text);
-    }
+    .ic-name{font-family:'Syne',sans-serif;font-size:13px;font-weight:700;margin-bottom:7px;line-height:1.3;}
     .ic-rows{display:flex;flex-direction:column;gap:5px;}
     .ic-row{display:flex;justify-content:space-between;align-items:baseline;gap:8px;}
     .ic-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);flex-shrink:0;white-space:nowrap;}
     .ic-val{font-size:11px;color:var(--text);font-weight:500;text-align:right;line-height:1.3;word-break:break-word;}
 
-    /* AI FAB */
+    /* ════════════════════ MOBILE BOTTOM BAR ════════════════════ */
+    .mobile-bottom-bar{
+      display:none;
+      position:fixed;bottom:0;left:0;right:0;height:var(--bottom-h);
+      background:var(--nav-bg);border-top:1px solid var(--border);backdrop-filter:blur(14px);
+      z-index:5000;align-items:center;gap:8px;padding:0 12px;
+    }
+    .mbb-show-btn{
+      flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+      padding:7px 12px;border-radius:14px;border:1.5px solid var(--orange);
+      background:rgba(249,115,22,.12);color:var(--orange);cursor:pointer;transition:all .2s;
+      white-space:nowrap;touch-action:manipulation;
+    }
+    .mbb-show-btn.active{background:var(--orange);color:#000;}
+    /* Scrollable list button in bottom bar */
+    .mbb-list-btn{
+      font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+      padding:7px 14px;border-radius:14px;border:none;
+      background:rgba(56,189,248,.15);color:#38bdf8;cursor:pointer;
+      touch-action:manipulation;white-space:nowrap;
+    }
+    .mbb-ai-btn{
+      margin-left:auto;flex-shrink:0;
+      height:38px;padding:0 16px;border-radius:19px;
+      background:linear-gradient(135deg,#38bdf8,#818cf8);
+      display:flex;align-items:center;gap:6px;
+      font-family:'Syne',sans-serif;font-weight:700;font-size:13px;
+      cursor:pointer;border:none;color:#000;
+      box-shadow:0 4px 14px rgba(56,189,248,.35);
+      touch-action:manipulation;
+    }
+
+    /* ════════════════════ MOBILE BOTTOM SHEET (list) ════════════════════ */
+    .mob-sheet-overlay{
+      display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:6500;
+    }
+    .mob-sheet-overlay.open{display:block;}
+    .mob-sheet{
+      position:fixed;bottom:0;left:0;right:0;z-index:6600;
+      background:var(--surface);border-radius:20px 20px 0 0;
+      border-top:1px solid var(--border);
+      max-height:60vh;display:flex;flex-direction:column;
+      transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.2,1);
+    }
+    .mob-sheet.open{transform:translateY(0);}
+    .mob-sheet-handle{
+      width:36px;height:4px;background:var(--border);border-radius:2px;
+      margin:12px auto 0;flex-shrink:0;
+    }
+    .mob-sheet-head{
+      display:flex;align-items:center;justify-content:space-between;
+      padding:10px 16px 8px;flex-shrink:0;
+    }
+    .mob-sheet-title{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;}
+    .mob-sheet-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
+    .mob-sheet-body{overflow-y:auto;padding:0 12px 24px;flex:1;}
+    .mob-sheet-body::-webkit-scrollbar{display:none;}
+    /* Each item row */
+    .mob-item{
+      display:flex;align-items:center;gap:12px;
+      padding:12px 8px;border-radius:10px;cursor:pointer;
+      border-bottom:1px solid var(--border);transition:background .15s;
+      touch-action:manipulation;
+    }
+    .mob-item:last-child{border-bottom:none;}
+    .mob-item:active{background:var(--surface2);}
+    .mob-item-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .mob-item-name{font-size:14px;font-weight:600;color:var(--text);}
+    .mob-item-sub{font-size:11px;color:var(--muted);margin-top:1px;}
+    .mob-item-arrow{margin-left:auto;color:var(--muted);font-size:14px;}
+    .mob-item.active-row .mob-item-name{color:var(--river);}
+    .mob-section-label{
+      font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
+      color:var(--muted);padding:12px 8px 4px;
+    }
+
+    /* ════════════════════ MOBILE INFO PANEL (bottom sheet style) ════════════════════ */
+    .mob-info-panel{
+      position:fixed;bottom:var(--bottom-h);left:0;right:0;z-index:4500;
+      background:rgba(18,23,35,0.98);border-top:1px solid var(--border);
+      border-radius:16px 16px 0 0;backdrop-filter:blur(16px);
+      padding:12px 16px 14px;
+      display:none;animation:slideUpPanel .22s ease;
+    }
+    @keyframes slideUpPanel{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+    .mip-top{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .mip-badge{font-size:9px;font-weight:700;letter-spacing:1px;text-transform:uppercase;padding:2px 8px;border-radius:4px;}
+    .mip-close{background:none;border:none;color:var(--muted);font-size:18px;cursor:pointer;margin-left:auto;padding:2px 6px;}
+    .mip-name{font-family:'Syne',sans-serif;font-size:15px;font-weight:700;margin-bottom:10px;}
+    .mip-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .mip-item{display:flex;flex-direction:column;gap:2px;}
+    .mip-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
+    .mip-val{font-size:12px;color:var(--text);font-weight:500;line-height:1.3;}
+
+    /* ════════════════════ DESKTOP AI FAB ════════════════════ */
     .ai-fab{
       position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
       height:40px;padding:0 20px;border-radius:20px;
@@ -136,54 +225,54 @@
     }
     .ai-fab:hover{transform:translateX(-50%) scale(1.06);box-shadow:0 10px 28px rgba(56,189,248,.5);}
 
-    /* Search modal */
+    /* ════════════════════ SEARCH MODAL ════════════════════ */
     .search-overlay{
       position:fixed;inset:0;background:rgba(0,0,0,.72);
       backdrop-filter:blur(6px);z-index:7000;
-      display:none;align-items:center;justify-content:center;
+      display:none;align-items:flex-end;justify-content:center;
     }
     .search-overlay.open{display:flex;}
     .search-modal{
       background:var(--surface);border:1px solid var(--border);
-      border-radius:18px;padding:26px;width:min(500px,92vw);
-      box-shadow:0 30px 80px rgba(0,0,0,.6);animation:scaleIn .18s ease;
+      border-radius:18px 18px 0 0;padding:20px 20px 32px;width:100%;max-width:560px;
+      box-shadow:0 -20px 60px rgba(0,0,0,.5);animation:slideUpModal .22s ease;
     }
-    @keyframes scaleIn{from{opacity:0;transform:scale(.95)}to{opacity:1;transform:scale(1)}}
-    .sm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:5px;}
-    .sm-head h3{font-family:'Syne',sans-serif;font-size:19px;font-weight:700;}
-    .sm-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;}
-    .sm-close:hover{color:var(--text);}
+    @keyframes slideUpModal{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    .sm-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;}
+    .sm-head h3{font-family:'Syne',sans-serif;font-size:18px;font-weight:700;}
+    .sm-close{background:none;border:none;color:var(--muted);font-size:22px;cursor:pointer;padding:0 4px;}
     .sm-sub{font-size:13px;color:var(--muted);margin-bottom:10px;}
     .cache-notice{
-      font-size:11.5px;color:var(--muted);margin-bottom:13px;
+      font-size:11px;color:var(--muted);margin-bottom:12px;
       padding:7px 11px;background:rgba(56,189,248,.07);
-      border-radius:8px;border:1px solid rgba(56,189,248,.18);
-      display:flex;align-items:center;gap:6px;
+      border-radius:8px;border:1px solid rgba(56,189,248,.15);
     }
     .cache-notice span{color:#38bdf8;font-weight:700;}
-    .sm-row{display:flex;gap:9px;margin-bottom:13px;}
+    .sm-row{display:flex;gap:8px;margin-bottom:12px;}
     .sm-input{
       flex:1;background:var(--surface2);border:1px solid var(--border);
-      border-radius:10px;padding:11px 15px;
+      border-radius:10px;padding:12px 14px;
       font-family:'DM Sans',sans-serif;font-size:15px;color:var(--text);outline:none;transition:border-color .2s;
     }
     .sm-input:focus{border-color:rgba(56,189,248,.5);}
     .sm-input::placeholder{color:var(--muted);}
     .sm-go{
       font-family:'Syne',sans-serif;font-weight:700;font-size:14px;
-      padding:11px 20px;border:none;border-radius:10px;
+      padding:12px 18px;border:none;border-radius:10px;
       background:linear-gradient(135deg,#38bdf8,#818cf8);
       color:#000;cursor:pointer;transition:opacity .2s;white-space:nowrap;
+      touch-action:manipulation;
     }
     .sm-go:hover{opacity:.85;}
     .sm-chips{display:flex;flex-wrap:wrap;gap:7px;}
     .sm-chip{
-      font-size:12px;padding:5px 11px;border-radius:11px;
+      font-size:12px;padding:6px 12px;border-radius:11px;
       border:1px solid var(--border);background:var(--surface2);color:var(--muted);
-      cursor:pointer;transition:all .18s;
+      cursor:pointer;transition:all .18s;touch-action:manipulation;
     }
-    .sm-chip:hover{color:var(--text);border-color:rgba(255,255,255,.2);}
+    .sm-chip:active{color:var(--text);border-color:rgba(255,255,255,.2);}
 
+    /* ════════════════════ MISC ════════════════════ */
     .loading-bar{
       position:fixed;top:0;left:0;right:0;height:3px;
       background:linear-gradient(90deg,#38bdf8,#818cf8,#4ade80);
@@ -191,27 +280,38 @@
       animation:shimmer 1.2s linear infinite;
     }
     @keyframes shimmer{from{background-position:200% 0}to{background-position:-200% 0}}
-
     .river-flow{stroke-dasharray:14 10;animation:flow 1.6s linear infinite;}
     @keyframes flow{from{stroke-dashoffset:48}to{stroke-dashoffset:0}}
-
     .toast{
-      position:fixed;top:60px;right:16px;
+      position:fixed;top:60px;right:12px;
       background:var(--surface);border:1px solid var(--border);
-      border-radius:10px;padding:10px 16px;font-size:13px;color:var(--text);
-      z-index:6000;display:none;box-shadow:0 10px 30px rgba(0,0,0,.4);
-      max-width:280px;animation:slideInR .25s ease;
+      border-radius:10px;padding:10px 14px;font-size:13px;color:var(--text);
+      z-index:8000;display:none;box-shadow:0 10px 30px rgba(0,0,0,.4);
+      max-width:260px;animation:slideInR .25s ease;
     }
-    @keyframes slideInR{from{opacity:0;transform:translateX(14px)}to{opacity:1;transform:translateX(0)}}
+    @keyframes slideInR{from{opacity:0;transform:translateX(10px)}to{opacity:1;transform:translateX(0)}}
     .toast.show{display:block;}
     .click-away{position:fixed;inset:0;z-index:5500;display:none;}
     .click-away.on{display:block;}
+
+    /* ════════════════════ MOBILE OVERRIDES ════════════════════ */
+    @media(max-width:640px){
+      .nav-items,.show-all-btn,.nav-sep:last-of-type,.ai-fab{display:none!important;}
+      .mobile-bottom-bar{display:flex;}
+      #map{bottom:var(--bottom-h);}
+      .info-card{display:none!important;} /* use mob-info-panel instead */
+      .filter-popup{top:58px;}
+    }
+    @media(min-width:641px){
+      .mobile-bottom-bar,.mob-sheet-overlay,.mob-sheet,.mob-info-panel{display:none!important;}
+    }
   </style>
 </head>
 <body>
 
 <div class="loading-bar" id="loadingBar"></div>
 
+<!-- ════ TOP NAV ════ -->
 <div class="top-nav">
   <div class="logo">🌐 AI Map</div>
   <div class="nav-sep"></div>
@@ -225,6 +325,7 @@
   <div class="nav-items" id="navItems"></div>
 </div>
 
+<!-- ════ FILTER POPUP ════ -->
 <div class="filter-popup" id="filterPopup">
   <div class="fp-title">Map Layer</div>
   <button class="fp-option selected r" data-cat="rivers"    onclick="selectCategory('rivers',this)">🌊 Rivers    <span class="fp-check">✓</span></button>
@@ -236,7 +337,7 @@
 
 <div id="map"></div>
 
-<!-- SMALL INFO CARD -->
+<!-- ════ DESKTOP INFO CARD ════ -->
 <div class="info-card" id="infoCard">
   <div class="ic-top">
     <div class="ic-badge" id="icBadge"></div>
@@ -251,10 +352,48 @@
   </div>
 </div>
 
+<!-- ════ DESKTOP AI FAB ════ -->
 <button class="ai-fab" onclick="openSearch()" title="Ctrl+K">✦ AI Search</button>
 
-<div class="toast" id="toast"></div>
+<!-- ════ MOBILE BOTTOM BAR ════ -->
+<div class="mobile-bottom-bar">
+  <button class="filter-btn" style="font-size:12px;padding:6px 10px;" onclick="toggleFilter()">
+    <span id="mFilterIcon">🌊</span>
+    <span id="mFilterLabel">Rivers</span>
+    <span class="filter-arrow">▼</span>
+  </button>
+  <button class="mbb-show-btn" id="mShowAllBtn" onclick="toggleAll()">Show All</button>
+  <button class="mbb-list-btn" onclick="openMobSheet()">☰ List</button>
+  <button class="mbb-ai-btn" onclick="openSearch()">✦ AI</button>
+</div>
 
+<!-- ════ MOBILE BOTTOM SHEET (river list) ════ -->
+<div class="mob-sheet-overlay" id="mobSheetOverlay" onclick="closeMobSheet()"></div>
+<div class="mob-sheet" id="mobSheet">
+  <div class="mob-sheet-handle"></div>
+  <div class="mob-sheet-head">
+    <div class="mob-sheet-title" id="mobSheetTitle">Rivers</div>
+    <button class="mob-sheet-close" onclick="closeMobSheet()">×</button>
+  </div>
+  <div class="mob-sheet-body" id="mobSheetBody"></div>
+</div>
+
+<!-- ════ MOBILE INFO PANEL ════ -->
+<div class="mob-info-panel" id="mobInfoPanel">
+  <div class="mip-top">
+    <div class="mip-badge" id="mipBadge"></div>
+    <button class="mip-close" onclick="closeMobInfo()">×</button>
+  </div>
+  <div class="mip-name" id="mipName"></div>
+  <div class="mip-grid">
+    <div class="mip-item"><span class="mip-label" id="mipL1">Origin</span><span class="mip-val" id="mipV1">—</span></div>
+    <div class="mip-item"><span class="mip-label" id="mipL2">Ends At</span><span class="mip-val" id="mipV2">—</span></div>
+    <div class="mip-item"><span class="mip-label" id="mipL3">Length</span><span class="mip-val" id="mipV3">—</span></div>
+    <div class="mip-item"><span class="mip-label" id="mipL4">Region</span><span class="mip-val" id="mipV4">—</span></div>
+  </div>
+</div>
+
+<!-- ════ SEARCH MODAL ════ -->
 <div class="search-overlay" id="searchOverlay" onclick="overlayBg(event)">
   <div class="search-modal">
     <div class="sm-head">
@@ -262,10 +401,10 @@
       <button class="sm-close" onclick="closeSearch()">×</button>
     </div>
     <p class="sm-sub">Koi bhi river, forest, mountain ya desert — AI map par dikhayega.</p>
-    <div class="cache-notice">💾 Cache: <span id="cacheCount">0</span> saved results — instant load honge</div>
+    <div class="cache-notice">💾 Cache: <span id="cacheCount">0</span> saved — instant load</div>
     <div class="sm-row">
-      <input class="sm-input" id="searchQuery" placeholder="e.g. 10 Pakistan rivers, Sahara, Alps..." />
-      <button class="sm-go" onclick="doAISearch()">Search →</button>
+      <input class="sm-input" id="searchQuery" placeholder="e.g. Sahara, Pakistan rivers, Alps..." />
+      <button class="sm-go" onclick="doAISearch()">Go →</button>
     </div>
     <div class="sm-chips">
       <span class="sm-chip" onclick="setChip(this)">Ganga</span>
@@ -275,25 +414,26 @@
       <span class="sm-chip" onclick="setChip(this)">Sahara Desert</span>
       <span class="sm-chip" onclick="setChip(this)">Andes Mountains</span>
       <span class="sm-chip" onclick="setChip(this)">Thar Desert</span>
-      <span class="sm-chip" onclick="setChip(this)">Congo Rainforest</span>
       <span class="sm-chip" onclick="setChip(this)">Himalayas</span>
     </div>
   </div>
 </div>
 
+<div class="toast" id="toast"></div>
+
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet-polylinedecorator/1.6.0/leaflet.polylineDecorator.min.js"></script>
 <script>
 // ══════════════════════════════════════════════
-// LOCAL DB
+// DATA
 // ══════════════════════════════════════════════
 const DB = {
   rivers: {
     "Ganga":       { name:"Ganga",        color:"#38bdf8", path:[[30.98,78.92],[29.95,78.17],[27.47,79.92],[26.85,80.92],[25.45,81.88],[25.32,83.01],[25.57,85.13],[24.87,87.95],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" },
     "Yamuna":      { name:"Yamuna",       color:"#67e8f9", path:[[31.01,78.45],[30.37,78.07],[29.42,77.67],[28.66,77.22],[27.18,78.02],[26.47,79.92],[25.43,81.88]], origin:"Yamunotri, Uttarakhand", dest:"Prayagraj", length:"1,376 km", region:"North India" },
     "Narmada":     { name:"Narmada",      color:"#06b6d4", path:[[22.67,81.76],[22.95,80.45],[22.75,79.20],[22.30,77.42],[22.03,76.10],[21.77,74.45],[21.52,73.38],[21.72,72.68]], origin:"Amarkantak, MP", dest:"Gulf of Khambhat", length:"1,312 km", region:"Central India" },
-    "Godavari":    { name:"Godavari",     color:"#0ea5e9", path:[[19.97,73.78],[19.38,74.72],[19.12,76.55],[18.43,79.50],[17.88,80.78],[17.00,81.55],[16.52,82.23]], origin:"Trimbakeshwar, Maharashtra", dest:"Bay of Bengal", length:"1,465 km", region:"Peninsular India" },
-    "Krishna":     { name:"Krishna",      color:"#60a5fa", path:[[17.08,73.82],[16.85,75.23],[16.22,76.48],[15.72,78.30],[16.52,80.35],[16.12,81.45],[15.72,80.87]], origin:"Mahabaleshwar, Maharashtra", dest:"Bay of Bengal", length:"1,400 km", region:"Peninsular India" },
+    "Godavari":    { name:"Godavari",     color:"#0ea5e9", path:[[19.97,73.78],[19.38,74.72],[19.12,76.55],[18.43,79.50],[17.88,80.78],[17.00,81.55],[16.52,82.23]], origin:"Trimbakeshwar, MH", dest:"Bay of Bengal", length:"1,465 km", region:"Peninsular India" },
+    "Krishna":     { name:"Krishna",      color:"#60a5fa", path:[[17.08,73.82],[16.85,75.23],[16.22,76.48],[15.72,78.30],[16.52,80.35],[16.12,81.45],[15.72,80.87]], origin:"Mahabaleshwar, MH", dest:"Bay of Bengal", length:"1,400 km", region:"Peninsular India" },
     "Brahmaputra": { name:"Brahmaputra",  color:"#2dd4bf", path:[[29.80,93.50],[27.88,94.80],[26.18,91.77],[25.58,90.05],[24.88,89.42],[23.73,89.65],[23.10,90.50]], origin:"Kailash, Tibet", dest:"Bay of Bengal", length:"2,900 km", region:"Northeast India" },
     "Mahanadi":    { name:"Mahanadi",     color:"#93c5fd", path:[[21.58,83.05],[20.77,82.22],[20.25,82.72],[20.88,84.12],[20.22,85.88],[19.88,86.57]], origin:"Dhamtari, Chhattisgarh", dest:"Bay of Bengal", length:"858 km", region:"East India" },
     "Cauvery":     { name:"Cauvery",      color:"#22d3ee", path:[[12.33,75.57],[12.17,76.05],[11.87,77.03],[11.42,77.72],[10.92,78.78],[10.57,79.43],[11.13,79.85]], origin:"Talakaveri, Karnataka", dest:"Bay of Bengal", length:"800 km", region:"South India" },
@@ -330,17 +470,16 @@ const CAT_META = {
 };
 
 // ══════════════════════════════════════════════
-// LOCALSTORAGE CACHE
+// CACHE
 // ══════════════════════════════════════════════
 const CACHE_KEY = 'aimap_cache_v1';
-
 const PRESET_CACHE = {
   "top 5 indian rivers": { type:"rivers", ts:0, items:[
     { name:"Ganga",    color:"#38bdf8", isRiver:true, path:[[30.98,78.92],[27.47,79.92],[25.32,83.01],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" },
-    { name:"Yamuna",   color:"#67e8f9", isRiver:true, path:[[31.01,78.45],[29.42,77.67],[27.18,78.02],[25.43,81.88]], origin:"Yamunotri, Uttarakhand", dest:"Prayagraj (Sangam)", length:"1,376 km", region:"North India" },
+    { name:"Yamuna",   color:"#67e8f9", isRiver:true, path:[[31.01,78.45],[29.42,77.67],[27.18,78.02],[25.43,81.88]], origin:"Yamunotri", dest:"Prayagraj", length:"1,376 km", region:"North India" },
     { name:"Narmada",  color:"#06b6d4", isRiver:true, path:[[22.67,81.76],[22.75,79.20],[21.77,74.45],[21.72,72.68]], origin:"Amarkantak, MP", dest:"Gulf of Khambhat", length:"1,312 km", region:"Central India" },
-    { name:"Godavari", color:"#0ea5e9", isRiver:true, path:[[19.97,73.78],[19.12,76.55],[17.88,80.78],[16.52,82.23]], origin:"Trimbakeshwar, Maharashtra", dest:"Bay of Bengal", length:"1,465 km", region:"Peninsular India" },
-    { name:"Krishna",  color:"#a78bfa", isRiver:true, path:[[17.08,73.82],[16.22,76.48],[16.52,80.35],[15.72,80.87]], origin:"Mahabaleshwar, Maharashtra", dest:"Bay of Bengal", length:"1,400 km", region:"Peninsular India" }
+    { name:"Godavari", color:"#0ea5e9", isRiver:true, path:[[19.97,73.78],[19.12,76.55],[17.88,80.78],[16.52,82.23]], origin:"Trimbakeshwar, MH", dest:"Bay of Bengal", length:"1,465 km", region:"Peninsular India" },
+    { name:"Krishna",  color:"#a78bfa", isRiver:true, path:[[17.08,73.82],[16.22,76.48],[16.52,80.35],[15.72,80.87]], origin:"Mahabaleshwar, MH", dest:"Bay of Bengal", length:"1,400 km", region:"Peninsular India" }
   ]},
   "ganga": { type:"rivers", ts:0, items:[
     { name:"Ganga", color:"#38bdf8", isRiver:true, path:[[30.98,78.92],[29.95,78.17],[27.47,79.92],[26.85,80.92],[25.45,81.88],[25.32,83.01],[25.57,85.13],[24.87,87.95],[22.57,88.35],[21.90,88.10]], origin:"Gangotri, Uttarakhand", dest:"Bay of Bengal", length:"2,525 km", region:"North India" }
@@ -358,33 +497,24 @@ const PRESET_CACHE = {
     { name:"Andes Mountains", color:"#c4b5fd", path:[[11.0,-72.0],[5.0,-74.0],[-1.0,-77.0],[-8.0,-77.5],[-16.0,-72.0],[-23.0,-67.0],[-33.0,-70.5],[-44.0,-72.0],[-52.0,-73.0]], origin:"Venezuela/Colombia", dest:"Patagonia, Argentina", length:"7,000 km", region:"South America" }
   ]},
   "amazon rainforest": { type:"forests", ts:0, items:[
-    { name:"Amazon Rainforest", latlng:[-3.50,-60.00], radius:2800000, color:"#4ade80", origin:"Brazil/Peru/Colombia", dest:"World's Largest Forest", length:"5,500,000 sq km", region:"South America" }
+    { name:"Amazon Rainforest", latlng:[-3.50,-60.00], radius:2800000, color:"#4ade80", origin:"Brazil/Peru/Colombia", dest:"World's Largest", length:"5,500,000 sq km", region:"South America" }
   ]},
   "congo rainforest": { type:"forests", ts:0, items:[
-    { name:"Congo Rainforest", latlng:[-1.00,23.00], radius:1800000, color:"#22c55e", origin:"DRC, Republic of Congo", dest:"2nd Largest Rainforest", length:"3,300,000 sq km", region:"Central Africa" }
+    { name:"Congo Rainforest", latlng:[-1.00,23.00], radius:1800000, color:"#22c55e", origin:"DRC, Congo", dest:"2nd Largest", length:"3,300,000 sq km", region:"Central Africa" }
   ]}
 };
-
-function loadCache(){ try{ return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}'); }catch(e){ return {}; } }
-function saveCache(c){ try{ localStorage.setItem(CACHE_KEY,JSON.stringify(c)); }catch(e){} }
+function loadCache(){ try{return JSON.parse(localStorage.getItem(CACHE_KEY)||'{}')}catch(e){return{}} }
+function saveCache(c){ try{localStorage.setItem(CACHE_KEY,JSON.stringify(c))}catch(e){} }
 function getCached(q){ return loadCache()[q.toLowerCase().trim()]||null; }
-function setCache(q,type,items){
-  const c=loadCache(); c[q.toLowerCase().trim()]={type,items,ts:Date.now()}; saveCache(c); updateCacheCount();
-}
-function updateCacheCount(){
-  const el=document.getElementById('cacheCount'); if(el) el.textContent=Object.keys(loadCache()).length;
-}
-function initCache(){
-  const c=loadCache(); let added=0;
-  Object.keys(PRESET_CACHE).forEach(k=>{ if(!c[k]){ c[k]=PRESET_CACHE[k]; added++; } });
-  if(added) saveCache(c);
-  updateCacheCount();
-}
+function setCache(q,type,items){ const c=loadCache(); c[q.toLowerCase().trim()]={type,items,ts:Date.now()}; saveCache(c); updateCacheCount(); }
+function updateCacheCount(){ const el=document.getElementById('cacheCount'); if(el) el.textContent=Object.keys(loadCache()).length; }
+function initCache(){ const c=loadCache(); let a=0; Object.keys(PRESET_CACHE).forEach(k=>{if(!c[k]){c[k]=PRESET_CACHE[k];a++;}}); if(a)saveCache(c); updateCacheCount(); }
 
 // ══════════════════════════════════════════════
 // MAP
 // ══════════════════════════════════════════════
-const map = L.map('map',{zoomControl:false}).setView([22.5,78.0],5);
+const isMobile=()=>window.innerWidth<=640;
+const map=L.map('map',{zoomControl:false}).setView([22.5,78.0],5);
 L.control.zoom({position:'topright'}).addTo(map);
 L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
   attribution:'&copy; OpenStreetMap &copy; CARTO',subdomains:'abcd',maxZoom:20
@@ -394,6 +524,7 @@ let layerGroup=L.layerGroup().addTo(map);
 let activeCategory='rivers';
 let isAllShowing=false;
 let aiResults=[];
+let activeItem=null; // currently selected item for info
 
 // ── FILTER ──
 function toggleFilter(){
@@ -411,72 +542,130 @@ function selectCategory(cat,el){
   document.querySelectorAll('.fp-option').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected');
   const m=CAT_META[cat];
+  // Update both desktop and mobile filter labels
   document.getElementById('filterIcon').textContent=m.icon;
   document.getElementById('filterLabel').textContent=m.label;
+  const mfi=document.getElementById('mFilterIcon'), mfl=document.getElementById('mFilterLabel');
+  if(mfi) mfi.textContent=m.icon; if(mfl) mfl.textContent=m.label;
+  const msb=document.getElementById('mShowAllBtn');
+  if(msb){ msb.textContent='Show All'; msb.classList.remove('active'); }
   renderNav();
+  renderMobSheet();
   setTimeout(()=>{ isAllShowing=false; toggleAll(); },100);
 }
 
-// ── NAV ──
+// ── DESKTOP NAV ──
 function renderNav(){
   const strip=document.getElementById('navItems');
   strip.innerHTML=''; isAllShowing=false; closeInfo();
   const m=CAT_META[activeCategory];
   document.getElementById('showAllBtn').textContent=`Show All ${m.label}`;
   document.getElementById('showAllBtn').classList.remove('active');
-  Object.keys(DB[activeCategory]).forEach(name=>strip.appendChild(makeBtn(name,name,false)));
+  Object.keys(DB[activeCategory]).forEach(name=>strip.appendChild(makeNavBtn(name,name,false)));
   if(aiResults.length){
-    const sep=document.createElement('span'); sep.className='ai-section-label'; sep.textContent='— AI Results';
+    const sep=document.createElement('span'); sep.className='ai-section-label'; sep.textContent='— AI';
     strip.appendChild(sep);
-    aiResults.forEach((r,i)=>{ const btn=makeBtn(r.name,r.name,true); btn.dataset.aiIdx=i; strip.appendChild(btn); });
+    aiResults.forEach((r,i)=>{ const btn=makeNavBtn(r.name,r.name,true); btn.dataset.aiIdx=i; strip.appendChild(btn); });
   }
 }
-function makeBtn(label,key,isAI){
+function makeNavBtn(label,key,isAI){
   const btn=document.createElement('button');
   btn.className='nav-item-btn'+(isAI?' ai-result':'');
   btn.textContent=label;
-  btn.onclick=()=>{ isAI?drawSingleAI(parseInt(btn.dataset.aiIdx),btn):drawSingleLocal(key,btn); };
+  btn.onclick=()=>{ isAI?selectItem(null,parseInt(btn.dataset.aiIdx),btn):selectItem(key,null,btn); };
   return btn;
 }
 
-// ── DRAW LOCAL ──
-function drawSingleLocal(name,btn){
-  layerGroup.clearLayers(); closeInfo(); isAllShowing=false; clearActive();
-  btn.classList.add('active','c-'+CAT_META[activeCategory].cls);
-  document.getElementById('showAllBtn').classList.remove('active');
-  const item=DB[activeCategory][name];
-  if(item.path){ const l=drawPath(item,false); map.fitBounds(l.getBounds(),{padding:[90,90]}); }
-  else { drawCircle(item,false); map.setView(item.latlng,7); }
-  showInfo(item,activeCategory);
+// ── MOBILE SHEET ──
+function openMobSheet(){
+  renderMobSheet();
+  document.getElementById('mobSheetOverlay').classList.add('open');
+  document.getElementById('mobSheet').classList.add('open');
 }
+function closeMobSheet(){
+  document.getElementById('mobSheetOverlay').classList.remove('open');
+  document.getElementById('mobSheet').classList.remove('open');
+}
+function renderMobSheet(){
+  const body=document.getElementById('mobSheetBody');
+  const m=CAT_META[activeCategory];
+  document.getElementById('mobSheetTitle').textContent=`${m.icon} ${m.label}`;
+  body.innerHTML='';
+  // Local items
+  Object.keys(DB[activeCategory]).forEach(name=>{
+    const item=DB[activeCategory][name];
+    body.appendChild(makeMobItem(name,item,false,null));
+  });
+  // AI results
+  if(aiResults.length){
+    const sec=document.createElement('div'); sec.className='mob-section-label'; sec.textContent='✦ AI Results';
+    body.appendChild(sec);
+    aiResults.forEach((r,i)=>body.appendChild(makeMobItem(r.name,r.item,true,i)));
+  }
+}
+function makeMobItem(name,item,isAI,aiIdx){
+  const div=document.createElement('div'); div.className='mob-item';
+  const dot=document.createElement('div'); dot.className='mob-item-dot'; dot.style.background=item.color||'#38bdf8';
+  const info=document.createElement('div');
+  const nm=document.createElement('div'); nm.className='mob-item-name'; nm.textContent=name;
+  const sub=document.createElement('div'); sub.className='mob-item-sub'; sub.textContent=item.region||item.origin||'';
+  info.appendChild(nm); info.appendChild(sub);
+  const arr=document.createElement('span'); arr.className='mob-item-arrow'; arr.textContent='›';
+  div.appendChild(dot); div.appendChild(info); div.appendChild(arr);
+  div.onclick=()=>{
+    closeMobSheet();
+    selectItem(isAI?null:name, isAI?aiIdx:null, null);
+  };
+  return div;
+}
+
+// ── UNIFIED SELECT (desktop + mobile) ──
+function selectItem(localName, aiIdx, navBtn){
+  layerGroup.clearLayers(); closeInfo(); closeMobInfo(); isAllShowing=false;
+  clearActive();
+  document.getElementById('showAllBtn').classList.remove('active');
+  const msb=document.getElementById('mShowAllBtn'); if(msb){msb.textContent='Show All';msb.classList.remove('active');}
+
+  let item, cat=activeCategory;
+  if(localName!==null){
+    item=DB[activeCategory][localName];
+    if(navBtn) navBtn.classList.add('active','c-'+CAT_META[cat].cls);
+  } else {
+    const r=aiResults[aiIdx]; if(!r) return;
+    item=r.item;
+    if(navBtn) navBtn.classList.add('active','c-'+CAT_META[cat].cls);
+  }
+  if(!item) return;
+  activeItem=item;
+
+  if(item.path?.length>1){ const l=drawPathRaw(item,false); map.fitBounds(l.getBounds(),{padding:[60,60]}); }
+  else if(item.latlng){ drawCircleRaw(item,false); map.setView(item.latlng,7); }
+
+  if(isMobile()) showMobInfo(item,cat);
+  else showInfo(item,cat);
+}
+
 function toggleAll(){
-  isAllShowing=!isAllShowing; layerGroup.clearLayers(); closeInfo(); clearActive();
-  const allBtn=document.getElementById('showAllBtn'), m=CAT_META[activeCategory];
+  isAllShowing=!isAllShowing; layerGroup.clearLayers(); closeInfo(); closeMobInfo(); clearActive();
+  const allBtn=document.getElementById('showAllBtn');
+  const mAllBtn=document.getElementById('mShowAllBtn');
+  const m=CAT_META[activeCategory];
   if(isAllShowing){
     allBtn.classList.add('active'); allBtn.textContent=`Hide ${m.label}`;
+    if(mAllBtn){mAllBtn.classList.add('active');mAllBtn.textContent='Hide';}
     Object.values(DB[activeCategory]).forEach(item=>{ item.path?drawPath(item,true):drawCircle(item,true); });
     aiResults.forEach(r=>{ r.item.path?.length>1?drawPathRaw(r.item,true):r.item.latlng&&drawCircleRaw(r.item,true); });
     map.setView([22.5,78.0],5);
   } else {
     allBtn.classList.remove('active'); allBtn.textContent=`Show All ${m.label}`;
+    if(mAllBtn){mAllBtn.classList.remove('active');mAllBtn.textContent='Show All';}
   }
 }
 function clearActive(){
   document.querySelectorAll('.nav-item-btn').forEach(b=>b.classList.remove('active','c-river','c-forest','c-mountain','c-desert'));
 }
 
-// ── DRAW AI ──
-function drawSingleAI(idx,btn){
-  layerGroup.clearLayers(); closeInfo(); isAllShowing=false; clearActive();
-  btn.classList.add('active','c-'+CAT_META[activeCategory].cls);
-  document.getElementById('showAllBtn').classList.remove('active');
-  const r=aiResults[idx]; if(!r) return;
-  if(r.item.path?.length>1){ const l=drawPathRaw(r.item,false); map.fitBounds(l.getBounds(),{padding:[90,90]}); }
-  else if(r.item.latlng){ drawCircleRaw(r.item,false); map.setView(r.item.latlng,7); }
-  showInfo(r.item,activeCategory);
-}
-
-// ── DRAW PRIMITIVES ──
+// ── DRAW ──
 function drawPath(item,thin){ return drawPathRaw(item,thin); }
 function drawPathRaw(item,thin){
   const w=thin?2.8:5.5;
@@ -497,9 +686,7 @@ function drawCircleRaw(item,thin){
   }).addTo(layerGroup);
 }
 
-// ══════════════════════════════════════════════
-// INFO CARD — SMALL + DRAG SIRF POSITION MOVE KARE
-// ══════════════════════════════════════════════
+// ── DESKTOP INFO CARD ──
 function showInfo(item,cat){
   const m=CAT_META[cat];
   const badge=document.getElementById('icBadge');
@@ -511,23 +698,33 @@ function showInfo(item,cat){
   document.getElementById('icV2').textContent=item.dest||'—';
   document.getElementById('icV3').textContent=item.length||'—';
   document.getElementById('icV4').textContent=item.region||'—';
-
   const card=document.getElementById('infoCard');
-  // Agar user ne drag nahi kiya — default position reset karo
   if(!card._dragged){
-    card.style.cssText='display:block;position:fixed;bottom:24px;right:24px;top:auto;left:auto;transform:none;';
-  } else {
-    card.style.display='block'; // sirf visible karo, position mat chhedo
-  }
+    card.style.cssText='display:block;position:fixed;bottom:24px;right:24px;top:auto;left:auto;transform:none;width:215px;';
+  } else { card.style.display='block'; }
 }
-
 function closeInfo(){
   const card=document.getElementById('infoCard');
-  card.style.display='none';
-  card._dragged=false; // close pe reset karo taaki next baar default position mile
+  card.style.display='none'; card._dragged=false;
 }
 
-// DRAG — sirf position change, data nahi
+// ── MOBILE INFO PANEL ──
+function showMobInfo(item,cat){
+  const m=CAT_META[cat];
+  const badge=document.getElementById('mipBadge');
+  badge.textContent=m.label.replace(/s$/,'');
+  badge.style.cssText=`background:${m.color}22;color:${m.color};`;
+  document.getElementById('mipName').textContent=item.name||'—';
+  m.lbs.forEach((l,i)=>document.getElementById('mipL'+(i+1)).textContent=l);
+  document.getElementById('mipV1').textContent=item.origin||'—';
+  document.getElementById('mipV2').textContent=item.dest||'—';
+  document.getElementById('mipV3').textContent=item.length||'—';
+  document.getElementById('mipV4').textContent=item.region||'—';
+  document.getElementById('mobInfoPanel').style.display='block';
+}
+function closeMobInfo(){ document.getElementById('mobInfoPanel').style.display='none'; }
+
+// ── DESKTOP DRAG ──
 (function(){
   const el=document.getElementById('infoCard');
   let sx=0,sy=0,dragging=false;
@@ -536,14 +733,12 @@ function closeInfo(){
     e.preventDefault(); dragging=true;
     const rect=el.getBoundingClientRect();
     sx=e.clientX-rect.left; sy=e.clientY-rect.top;
-    // Absolute positioning pe switch
     el.style.left=rect.left+'px'; el.style.top=rect.top+'px';
     el.style.right='auto'; el.style.bottom='auto'; el.style.transform='none';
     el._dragged=true;
     document.onmousemove=e=>{
       if(!dragging) return;
-      el.style.left=(e.clientX-sx)+'px';
-      el.style.top=(e.clientY-sy)+'px';
+      el.style.left=(e.clientX-sx)+'px'; el.style.top=(e.clientY-sy)+'px';
     };
     document.onmouseup=()=>{ dragging=false; document.onmousemove=null; document.onmouseup=null; };
   });
@@ -553,11 +748,13 @@ function closeInfo(){
 function openSearch(){ updateCacheCount(); document.getElementById('searchOverlay').classList.add('open'); setTimeout(()=>document.getElementById('searchQuery').focus(),80); }
 function closeSearch(){ document.getElementById('searchOverlay').classList.remove('open'); }
 function overlayBg(e){ if(e.target.id==='searchOverlay') closeSearch(); }
-function setChip(el){ document.getElementById('searchQuery').value=el.textContent; document.getElementById('searchQuery').focus(); }
+function setChip(el){ document.getElementById('searchQuery').value=el.textContent; }
 function updateFilterUI(cat){
   const m=CAT_META[cat]||CAT_META.rivers;
   document.getElementById('filterIcon').textContent=m.icon;
   document.getElementById('filterLabel').textContent=m.label;
+  const mfi=document.getElementById('mFilterIcon'), mfl=document.getElementById('mFilterLabel');
+  if(mfi) mfi.textContent=m.icon; if(mfl) mfl.textContent=m.label;
   document.querySelectorAll('.fp-option').forEach(o=>{ o.classList.remove('selected'); if(o.dataset.cat===cat) o.classList.add('selected'); });
 }
 
@@ -565,12 +762,8 @@ async function doAISearch(){
   const query=document.getElementById('searchQuery').value.trim();
   if(!query){ showToast('⚠️ Kuch likho pehle!'); return; }
   closeSearch();
-
-  // ── CACHE FIRST ──
   const cached=getCached(query);
-  if(cached){ showToast(`💾 Cache se load: "${query}"`); loadFromCache(cached); return; }
-
-  // ── API CALL ──
+  if(cached){ showToast(`💾 Cache: "${query}"`); loadFromCache(cached); return; }
   showLoading(true);
   try{
     const res=await fetch('https://gemini-chatall.onrender.com/api/map/search',{
@@ -578,9 +771,8 @@ async function doAISearch(){
     });
     const data=await res.json();
     if(!data.success) throw new Error(data.message||'Failed');
-    const result=data.data; layerGroup.clearLayers(); closeInfo();
+    const result=data.data; layerGroup.clearLayers(); closeInfo(); closeMobInfo();
     const newAI=[]; const COLORS=['#38bdf8','#67e8f9','#06b6d4','#0ea5e9','#60a5fa','#2dd4bf','#22d3ee','#93c5fd','#818cf8','#a78bfa','#4ade80','#fbbf24'];
-
     if(result.rivers?.length){
       activeCategory='rivers'; updateFilterUI('rivers');
       const bounds=[];
@@ -594,7 +786,7 @@ async function doAISearch(){
         newAI.push({name:r.name,item});
         if(r.path?.length>1) bounds.push(L.polyline(r.path).getBounds());
       });
-      if(bounds.length){ const b=bounds.reduce((a,c)=>a.extend(c),bounds[0]); map.fitBounds(b,{padding:[70,70]}); }
+      if(bounds.length){ const b=bounds.reduce((a,c)=>a.extend(c),bounds[0]); map.fitBounds(b,{padding:[60,60]}); }
       setCache(query,'rivers',newAI.map(r=>r.item));
     } else if(result.items?.length){
       const cat=data.type||activeCategory; activeCategory=cat; updateFilterUI(cat);
@@ -605,15 +797,15 @@ async function doAISearch(){
       });
       setCache(query,cat,newAI.map(r=>r.item));
     }
-    aiResults=newAI; renderNav();
-    showToast(`✦ ${newAI.length} result(s) — "${query}"`);
-    if(newAI.length===1){ const f=document.querySelector('.nav-item-btn.ai-result'); if(f) f.click(); }
+    aiResults=newAI; renderNav(); renderMobSheet();
+    showToast(`✦ ${newAI.length} result(s)`);
+    if(newAI.length===1) selectItem(null,0,null);
   } catch(err){ showToast('❌ '+err.message); }
   finally{ showLoading(false); }
 }
 
 function loadFromCache(cached){
-  layerGroup.clearLayers(); closeInfo();
+  layerGroup.clearLayers(); closeInfo(); closeMobInfo();
   const cat=cached.type||'rivers'; activeCategory=cat; updateFilterUI(cat);
   const newAI=[];
   cached.items.forEach(item=>{
@@ -621,17 +813,17 @@ function loadFromCache(cached){
     newAI.push({name:item.name,item});
   });
   const paths=cached.items.filter(i=>i.path?.length>1);
-  if(paths.length){ const b=paths.map(i=>L.polyline(i.path).getBounds()).reduce((a,c)=>a.extend(c)); map.fitBounds(b,{padding:[70,70]}); }
+  if(paths.length){ const b=paths.map(i=>L.polyline(i.path).getBounds()).reduce((a,c)=>a.extend(c)); map.fitBounds(b,{padding:[60,60]}); }
   else if(cached.items[0]?.latlng) map.setView(cached.items[0].latlng,5);
-  aiResults=newAI; renderNav();
-  showToast(`💾 ${newAI.length} results — cache se`);
-  if(newAI.length===1){ const f=document.querySelector('.nav-item-btn.ai-result'); if(f) f.click(); }
+  aiResults=newAI; renderNav(); renderMobSheet();
+  showToast(`💾 ${newAI.length} results`);
+  if(newAI.length===1) selectItem(null,0,null);
 }
 
 // ── UTILS ──
 function showLoading(on){ document.getElementById('loadingBar').style.display=on?'block':'none'; }
 let toastT;
-function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3500); }
+function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3200); }
 
 document.addEventListener('keydown',e=>{
   if(e.key==='Escape'){ closeSearch(); closeFilter(); }
@@ -642,6 +834,7 @@ document.getElementById('searchQuery').addEventListener('keypress',e=>{ if(e.key
 // ── BOOT ──
 initCache();
 renderNav();
+renderMobSheet();
 setTimeout(()=>{ toggleAll(); },300);
 </script>
 </body>

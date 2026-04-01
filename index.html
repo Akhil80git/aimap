@@ -142,12 +142,36 @@
     .preview-item img{width:48px;height:48px;border-radius:8px;object-fit:cover;border:1px solid var(--border);}
     .preview-remove{position:absolute;top:-5px;right:-5px;background:#ef4444;color:white;border:none;border-radius:50%;cursor:pointer;width:18px;height:18px;font-size:10px;display:flex;align-items:center;justify-content:center;}
     .input-row{display:flex;align-items:center;padding:6px 10px;gap:6px;}
-    .icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;color:var(--text-muted);font-size:1.1rem;transition:background .2s;flex-shrink:0;}
+    .icon-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:10px;cursor:pointer;color:var(--text-muted);font-size:1.1rem;transition:background .2s;flex-shrink:0;border:none;background:transparent;}
     .icon-btn:hover{background:var(--bg3);color:var(--primary);}
     .input-row input{flex:1;border:none;outline:none;padding:8px 6px;font-size:.93rem;background:transparent;color:var(--text);}
     .input-row input::placeholder{color:var(--text-muted);}
     .send-btn{width:38px;height:38px;background:linear-gradient(135deg,#6c63ff,#8b5cf6);color:white;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(108,99,255,.35);transition:transform .15s;flex-shrink:0;font-size:1rem;}
     .send-btn:active{transform:scale(.9);}
+
+    /* ===== QUIZ STYLES ===== */
+    .quiz-wrap{width:100%;max-width:520px;}
+    .quiz-top-label{font-size:.75rem;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    .quiz-progress-bar{height:4px;background:var(--bg3);border-radius:2px;margin-bottom:14px;overflow:hidden;}
+    .quiz-progress-fill{height:100%;background:linear-gradient(90deg,#6c63ff,#06d6a0);border-radius:2px;transition:width .35s ease;}
+    .quiz-q-card{background:var(--msg-ai-bg);border:1px solid var(--msg-ai-border);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
+    .quiz-q-num{font-size:.68rem;color:var(--text-muted);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
+    .quiz-q-text{font-size:.92rem;font-weight:700;color:var(--text);margin-bottom:12px;line-height:1.5;}
+    .quiz-opts{display:flex;flex-direction:column;gap:7px;}
+    .quiz-opt{padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer;font-size:.84rem;color:var(--text);background:var(--bg2);display:flex;align-items:center;gap:10px;transition:border-color .15s,background .15s,transform .1s;user-select:none;}
+    .quiz-opt:hover:not(.locked){border-color:var(--primary);background:var(--bg3);transform:translateX(2px);}
+    .quiz-opt.correct{background:#d1fae5;border-color:#059669;color:#065f46;}
+    .quiz-opt.wrong{background:#fee2e2;border-color:#ef4444;color:#991b1b;}
+    [data-theme="dark"] .quiz-opt.correct{background:#064e3b;border-color:#059669;color:#6ee7b7;}
+    [data-theme="dark"] .quiz-opt.wrong{background:#450a0a;border-color:#ef4444;color:#fca5a5;}
+    .quiz-opt-letter{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;color:var(--text-muted);transition:all .15s;}
+    .quiz-opt.correct .quiz-opt-letter{background:#059669;border-color:#059669;color:white;}
+    .quiz-opt.wrong .quiz-opt-letter{background:#ef4444;border-color:#ef4444;color:white;}
+    .quiz-result-card{background:var(--bg2);border:1px solid var(--msg-ai-border);border-radius:16px;padding:20px;text-align:center;margin-top:6px;display:none;}
+    .quiz-result-score{font-size:2rem;font-weight:900;background:linear-gradient(135deg,#6c63ff,#06d6a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+    .quiz-result-msg{font-size:.82rem;color:var(--text-muted);margin-top:5px;}
+    .quiz-retry-btn{margin-top:14px;padding:9px 22px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:.83rem;cursor:pointer;font-weight:700;transition:background .2s,border-color .2s;}
+    .quiz-retry-btn:hover{background:var(--bg3);border-color:var(--primary);}
 
     /* ===== CAMERA — FULLSCREEN ===== */
     .camera-modal{display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column;}
@@ -256,6 +280,8 @@
           <label class="icon-btn" title="Attach files">
             📎<input type="file" multiple accept="image/*,.pdf,.txt" style="display:none;" onchange="handleMultipleUpload(event)">
           </label>
+          <!-- ===== MCQ QUIZ BUTTON ===== -->
+          <button class="icon-btn" title="MCQ Quiz Mode" onclick="startQuizMode()" style="font-size:1.1rem;">📝</button>
           <input type="text" id="userInput" placeholder="Ask Cypher anything..." onkeypress="if(event.key==='Enter')sendMessage()">
           <button class="send-btn" onclick="sendMessage()">➤</button>
         </div>
@@ -283,7 +309,10 @@
   const API_BASE_URL = "https://gemini-chatall.onrender.com";
   let currentChatId=null,isStudyMode=false,pendingAttachments=[],activeQuestionContext="",videoStream=null,currentZoom=1,maxZoom=4;
 
-  /* THEME */
+  /* ===== QUIZ STATE ===== */
+  let quizData=[], quizAnswered=[], quizCorrect=0;
+
+  /* ===== THEME ===== */
   function setTheme(t){
     document.documentElement.setAttribute('data-theme',t);
     localStorage.setItem('cypher-theme',t);
@@ -297,7 +326,7 @@
     if(sp.classList.contains('open')&&!sp.contains(e.target)&&!e.target.closest('.settings-btn')) sp.classList.remove('open');
   });
 
-  /* CAMERA */
+  /* ===== CAMERA ===== */
   async function openCamera(){
     const modal=document.getElementById('cameraModal');
     const video=document.getElementById('videoElement');
@@ -353,7 +382,7 @@
     finally{el.placeholder=orig;el.disabled=false;el.focus();}
   }
 
-  /* SIDEBAR */
+  /* ===== SIDEBAR ===== */
   function toggleSidebar(){
     document.getElementById('appSidebar').classList.toggle('open');
     document.getElementById('sidebarOverlay').classList.toggle('show');
@@ -363,7 +392,7 @@
     document.getElementById('sidebarOverlay').classList.remove('show');
   }
 
-  /* MODE */
+  /* ===== MODE ===== */
   function setMode(study,isFromButton=false){
     isStudyMode=study; activeQuestionContext=""; currentChatId=null;
     const pill=document.getElementById('currentModeInfo');
@@ -388,11 +417,11 @@
     const tip=tips[Math.floor(Math.random()*tips.length)];
     const banner=document.createElement('div');
     banner.className='welcome-banner';
-    banner.innerHTML=`<div class="welcome-logo">Cypher</div><div class="welcome-greeting">${gr}!</div><div class="welcome-sub">${tip}</div>`;
+    banner.innerHTML=`<div class="welcome-logo">Cypher</div><div class="welcome-greeting">${gr}!</div><div class="welcome-sub">${tip}</div><div style="margin-top:18px;font-size:.8rem;color:var(--text-muted);">💡 Tip: Click <strong>📝</strong> in the input bar to start an MCQ Quiz!</div>`;
     msgs.appendChild(banner);
   }
 
-  /* HISTORY */
+  /* ===== HISTORY ===== */
   async function loadHistory(){
     try{
       const res=await fetch(`${API_BASE_URL}/api/chat/history/all`);
@@ -400,7 +429,6 @@
       const chatList=document.getElementById('chatList');
       chatList.innerHTML='';
       if(data.success&&data.chats.length>0){
-        // Study chats — restore dropdowns
         const studyChats=data.chats.filter(c=>c.mode==='study');
         document.getElementById('activeStudyDropdowns').innerHTML='<div class="study-section-empty">No extractions yet</div>';
         for(const chat of studyChats){
@@ -411,7 +439,6 @@
             if(dd.success&&dd.chat?.studyData?.length>0) buildSidebarDropdown(dd.chat.studyData);
           }catch(e){}
         }
-        // Normal chats
         const normalChats=data.chats.filter(c=>c.mode!=='study');
         if(normalChats.length===0){
           chatList.innerHTML='<div style="padding:6px 8px;font-size:.78rem;color:#4a5568;font-style:italic;">No chats yet</div>';
@@ -459,7 +486,7 @@
     }
   }
 
-  /* FILE UPLOAD */
+  /* ===== FILE UPLOAD ===== */
   function handleMultipleUpload(e){
     Array.from(e.target.files).forEach(file=>{
       const reader=new FileReader();
@@ -483,7 +510,7 @@
   }
   function removeAtt(i){pendingAttachments.splice(i,1);updatePreview();}
 
-  /* MESSAGES */
+  /* ===== MESSAGES ===== */
   function addMessage(role,text,attachments=[]){
     const container=document.getElementById('messages');
     const div=document.createElement('div');
@@ -518,7 +545,7 @@
     if(window.innerWidth<=768) closeSidebar();
   }
 
-  /* STUDY DROPDOWN */
+  /* ===== STUDY DROPDOWN ===== */
   function buildSidebarDropdown(studyDataArray){
     const container=document.getElementById('activeStudyDropdowns');
     const empty=container.querySelector('.study-section-empty');
@@ -541,7 +568,150 @@
     container.prepend(groupDiv);
   }
 
-  /* SEND */
+  /* ===== MCQ QUIZ FEATURE ===== */
+  function startQuizMode(){
+    const input=document.getElementById('userInput');
+    input.value='Mujhe 10 MCQ questions do (topic: rivers of the world ya koi bhi interesting topic). Strictly sirf JSON array return karo, koi extra text nahi:\n[{"q":"Question text?","opts":["Option A","Option B","Option C","Option D"],"ans":0}]\n(ans = correct option ka index, 0-based)';
+    input.focus();
+    // Cursor end mein le jao
+    setTimeout(()=>{ input.setSelectionRange(input.value.length,input.value.length); },10);
+  }
+
+  function renderQuizInChat(arr){
+    quizData=arr;
+    quizAnswered=new Array(arr.length).fill(false);
+    quizCorrect=0;
+
+    const container=document.getElementById('messages');
+    const wrap=document.createElement('div');
+    wrap.className='message-wrapper assistant';
+    wrap.id='quizBlock_'+Date.now();
+    const blockId=wrap.id;
+
+    const letters=['A','B','C','D'];
+
+    let html=`<div class="quiz-wrap">`;
+    html+=`<div class="quiz-top-label">📝 MCQ Quiz &nbsp;·&nbsp; <span id="${blockId}_done">0</span> / ${arr.length} answered</div>`;
+    html+=`<div class="quiz-progress-bar"><div class="quiz-progress-fill" id="${blockId}_pf" style="width:0%"></div></div>`;
+
+    arr.forEach((item,qi)=>{
+      html+=`<div class="quiz-q-card" id="${blockId}_qcard_${qi}">`;
+      html+=`<div class="quiz-q-num">Question ${qi+1} of ${arr.length}</div>`;
+      html+=`<div class="quiz-q-text">${item.q}</div>`;
+      html+=`<div class="quiz-opts">`;
+      item.opts.forEach((opt,oi)=>{
+        html+=`<div class="quiz-opt" id="${blockId}_opt_${qi}_${oi}" onclick="pickQuizAns('${blockId}',${qi},${oi})">
+                 <span class="quiz-opt-letter">${letters[oi]}</span>${escapeHtml(opt)}
+               </div>`;
+      });
+      html+=`</div></div>`;
+    });
+
+    html+=`<div class="quiz-result-card" id="${blockId}_result">
+      <div class="quiz-result-score" id="${blockId}_rscore"></div>
+      <div class="quiz-result-msg" id="${blockId}_rmsg"></div>
+      <button class="quiz-retry-btn" onclick="retryQuiz('${blockId}')">↺ Retry Quiz</button>
+    </div>`;
+    html+=`</div>`;
+
+    wrap.innerHTML=html;
+    container.appendChild(wrap);
+    setTimeout(()=>container.scrollTop=container.scrollHeight,80);
+  }
+
+  function pickQuizAns(blockId,qi,oi){
+    if(quizAnswered[qi]) return;
+    quizAnswered[qi]=true;
+    const q=quizData[qi];
+    const letters=['A','B','C','D'];
+
+    // Lock all options in this question
+    for(let i=0;i<q.opts.length;i++){
+      const el=document.getElementById(`${blockId}_opt_${qi}_${i}`);
+      if(el) el.classList.add('locked');
+    }
+
+    // Show correct / wrong
+    const chosenEl=document.getElementById(`${blockId}_opt_${qi}_${oi}`);
+    const correctEl=document.getElementById(`${blockId}_opt_${qi}_${q.ans}`);
+
+    if(oi===q.ans){
+      chosenEl.classList.add('correct');
+      chosenEl.querySelector('.quiz-opt-letter').textContent='✓';
+      quizCorrect++;
+    }else{
+      chosenEl.classList.add('wrong');
+      chosenEl.querySelector('.quiz-opt-letter').textContent='✗';
+      if(correctEl){
+        correctEl.classList.add('correct');
+        correctEl.querySelector('.quiz-opt-letter').textContent='✓';
+      }
+    }
+
+    // Update progress
+    const done=quizAnswered.filter(Boolean).length;
+    const pct=Math.round((done/quizData.length)*100);
+    const doneEl=document.getElementById(`${blockId}_done`);
+    const pfEl=document.getElementById(`${blockId}_pf`);
+    if(doneEl) doneEl.textContent=done;
+    if(pfEl) pfEl.style.width=pct+'%';
+
+    // Show result if all done
+    if(done===quizData.length){
+      const resultEl=document.getElementById(`${blockId}_result`);
+      const scoreEl=document.getElementById(`${blockId}_rscore`);
+      const msgEl=document.getElementById(`${blockId}_rmsg`);
+      if(resultEl&&scoreEl&&msgEl){
+        resultEl.style.display='block';
+        scoreEl.textContent=`${quizCorrect} / ${quizData.length} Correct`;
+        const p=Math.round((quizCorrect/quizData.length)*100);
+        let msg='';
+        if(p===100) msg='🏆 Perfect score! Outstanding!';
+        else if(p>=80) msg='🌟 Great job! Almost there!';
+        else if(p>=60) msg='👍 Good effort! Keep going!';
+        else if(p>=40) msg='📖 Keep practicing!';
+        else msg='💪 Don\'t give up, try again!';
+        msgEl.textContent=`${msg} (${p}%)`;
+        setTimeout(()=>resultEl.scrollIntoView({behavior:'smooth',block:'center'}),100);
+      }
+    }
+  }
+
+  function retryQuiz(blockId){
+    const block=document.getElementById(blockId);
+    if(block) block.remove();
+    renderQuizInChat(quizData);
+  }
+
+  function escapeHtml(str){
+    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // Try to detect quiz JSON from AI response
+  function tryRenderQuiz(rawText){
+    try{
+      let clean=rawText.replace(/```json/gi,'').replace(/```/g,'').trim();
+      // Find first '['
+      const start=clean.indexOf('[');
+      if(start<0) return false;
+      clean=clean.slice(start);
+      // Find matching ']'
+      const end=clean.lastIndexOf(']');
+      if(end<0) return false;
+      clean=clean.slice(0,end+1);
+      const parsed=JSON.parse(clean);
+      if(!Array.isArray(parsed)||parsed.length===0) return false;
+      const first=parsed[0];
+      // Must have q, opts (array), ans (number)
+      if(typeof first.q!=='string'||!Array.isArray(first.opts)||typeof first.ans!=='number') return false;
+      renderQuizInChat(parsed);
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
+
+  /* ===== SEND ===== */
   async function sendMessage(){
     const input=document.getElementById('userInput');
     const text=input.value.trim();
@@ -575,13 +745,19 @@
       const res=await fetch(`${API_BASE_URL}/api/chat/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:queryToSend,chatId:currentChatId,attachments:attToSend,isStudyMode})});
       const data=await res.json();
       document.getElementById(lid)?.remove();
+
       if(data.success){
         if(data.isStudyMode&&data.studyData?.length>0){
           addMessage('assistant',`✅ **Extracted ${data.studyData.length} questions!**\nView them in the sidebar 📚`);
           buildSidebarDropdown(data.studyData);
           if(window.innerWidth<=768) closeSidebar();
         }else{
-          addMessage('assistant',data.result);
+          // ===== TRY QUIZ DETECT =====
+          const isQuiz=tryRenderQuiz(data.result);
+          if(!isQuiz){
+            addMessage('assistant',data.result);
+          }
+          // if isQuiz=true, renderQuizInChat already called, no text message needed
         }
         loadHistory();
       }
@@ -591,7 +767,7 @@
     }
   }
 
-  /* INIT */
+  /* ===== INIT ===== */
   window.onload=()=>{
     const saved=localStorage.getItem('cypher-theme')||'light';
     setTheme(saved);

@@ -11,12 +11,12 @@
       --bg:#0d1117; --nav-bg:rgba(13,17,23,0.97); --surface:#161b27; --surface2:#1e2535;
       --border:rgba(255,255,255,0.09); --text:#e6eaf3; --muted:#7986a0;
       --river:#38bdf8; --forest:#4ade80; --mountain:#a78bfa; --desert:#fbbf24; --orange:#f97316;
-      --nav-h:52px; --bottom-h:62px;
+      --nav-h:52px; --bottom-h:68px;
     }
     *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
     body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;height:100vh;height:100dvh;}
 
-    /* ════════════════════ TOP NAV ════════════════════ */
+    /* ════ TOP NAV ════ */
     .top-nav{
       position:fixed;top:0;left:0;right:0;height:var(--nav-h);
       background:var(--nav-bg);border-bottom:1px solid var(--border);backdrop-filter:blur(14px);
@@ -29,7 +29,6 @@
     }
     .nav-sep{width:1px;height:20px;background:var(--border);flex-shrink:0;}
 
-    /* Category filter button */
     .filter-btn{
       flex-shrink:0;display:flex;align-items:center;gap:6px;
       font-family:'DM Sans',sans-serif;font-size:13px;font-weight:600;
@@ -39,7 +38,6 @@
     .filter-arrow{font-size:10px;color:var(--muted);transition:transform .2s;margin-left:2px;}
     .filter-btn.open .filter-arrow{transform:rotate(180deg);}
 
-    /* Show All button — hidden on mobile (bottom bar mein hai) */
     .show-all-btn{
       flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12.5px;font-weight:600;
       padding:5px 12px;border-radius:16px;border:1.5px solid var(--orange);
@@ -47,7 +45,7 @@
     }
     .show-all-btn:hover,.show-all-btn.active{background:var(--orange);color:#000;}
 
-    /* Desktop horizontal nav items */
+    /* Desktop nav strip — scrollable */
     .nav-items{
       display:flex;gap:6px;flex:1;overflow-x:auto;scrollbar-width:none;white-space:nowrap;align-items:center;
     }
@@ -69,7 +67,7 @@
       text-transform:uppercase;color:var(--muted);padding:0 4px;white-space:nowrap;
     }
 
-    /* ════════════════════ FILTER POPUP ════════════════════ */
+    /* ════ FILTER POPUP ════ */
     .filter-popup{
       position:fixed;top:58px;left:12px;background:var(--surface);border:1px solid var(--border);
       border-radius:14px;padding:10px 8px;z-index:6000;box-shadow:0 20px 50px rgba(0,0,0,.55);
@@ -91,13 +89,13 @@
     .fp-option.selected.m{color:var(--mountain);}
     .fp-option.selected.d{color:var(--desert);}
 
-    /* ════════════════════ MAP ════════════════════ */
+    /* ════ MAP ════ */
     #map{
       position:fixed;top:var(--nav-h);left:0;right:0;z-index:1;
-      bottom:0; /* desktop */
+      bottom:0;
     }
 
-    /* ════════════════════ INFO CARD — Desktop ════════════════════ */
+    /* ════ DESKTOP INFO CARD ════ */
     .info-card{
       position:fixed;bottom:24px;right:24px;
       background:rgba(18,23,35,0.97);border:1px solid var(--border);
@@ -118,39 +116,95 @@
     .ic-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);flex-shrink:0;white-space:nowrap;}
     .ic-val{font-size:11px;color:var(--text);font-weight:500;text-align:right;line-height:1.3;word-break:break-word;}
 
-    /* ════════════════════ MOBILE BOTTOM BAR ════════════════════ */
+    /* ════ MOBILE BOTTOM BAR — redesigned ════ */
     .mobile-bottom-bar{
       display:none;
-      position:fixed;bottom:0;left:0;right:0;height:var(--bottom-h);
+      position:fixed;bottom:0;left:0;right:0;
+      height:var(--bottom-h);
       background:var(--nav-bg);border-top:1px solid var(--border);backdrop-filter:blur(14px);
-      z-index:5000;align-items:center;gap:8px;padding:0 12px;
+      z-index:5000;
+      flex-direction:column;
+      padding:0;
     }
+
+    /* Top row: filter + show all + list + AI button */
+    .mbb-top-row{
+      display:flex;align-items:center;gap:8px;
+      padding:8px 12px 0;
+      flex:1;
+    }
+
+    /* Bottom row: scrollable item names */
+    .mbb-scroll-row{
+      display:flex;align-items:center;gap:6px;
+      padding:4px 12px 8px;
+      overflow-x:auto;scrollbar-width:none;
+    }
+    .mbb-scroll-row::-webkit-scrollbar{display:none;}
+
+    .mbb-item-pill{
+      flex-shrink:0;
+      display:flex;align-items:center;gap:5px;
+      font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;
+      padding:3px 10px;border-radius:12px;border:1px solid var(--border);
+      background:var(--surface2);color:var(--muted);cursor:pointer;
+      transition:all .2s;touch-action:manipulation;white-space:nowrap;
+    }
+    .mbb-item-pill.active-pill{color:#000;}
+    .mbb-item-pill.ai-pill{border-style:dashed;border-color:rgba(56,189,248,.4);color:#38bdf8;background:rgba(56,189,248,.08);}
+    .mbb-item-pill.ai-pill.active-pill{background:#38bdf8;color:#000;border-style:solid;}
+    .mbb-pill-dot{width:6px;height:6px;border-radius:50%;flex-shrink:0;}
+    .mbb-pill-close{
+      font-size:13px;line-height:1;margin-left:2px;opacity:.6;
+      background:none;border:none;color:inherit;cursor:pointer;padding:0;
+    }
+
     .mbb-show-btn{
-      flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
-      padding:7px 12px;border-radius:14px;border:1.5px solid var(--orange);
-      background:rgba(249,115,22,.12);color:var(--orange);cursor:pointer;transition:all .2s;
+      flex-shrink:0;font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;
+      padding:5px 10px;border-radius:12px;border:1.5px solid var(--orange);
+      background:rgba(249,115,22,.1);color:var(--orange);cursor:pointer;transition:all .2s;
       white-space:nowrap;touch-action:manipulation;
     }
     .mbb-show-btn.active{background:var(--orange);color:#000;}
-    /* Scrollable list button in bottom bar */
+
     .mbb-list-btn{
-      font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
-      padding:7px 14px;border-radius:14px;border:none;
-      background:rgba(56,189,248,.15);color:#38bdf8;cursor:pointer;
+      font-family:'DM Sans',sans-serif;font-size:11.5px;font-weight:600;
+      padding:5px 12px;border-radius:12px;border:1px solid var(--border);
+      background:var(--surface2);color:var(--muted);cursor:pointer;
       touch-action:manipulation;white-space:nowrap;
     }
+
+    /* AI button — right side, slightly lifted */
     .mbb-ai-btn{
       margin-left:auto;flex-shrink:0;
-      height:38px;padding:0 16px;border-radius:19px;
+      height:36px;padding:0 14px;border-radius:18px;
       background:linear-gradient(135deg,#38bdf8,#818cf8);
-      display:flex;align-items:center;gap:6px;
-      font-family:'Syne',sans-serif;font-weight:700;font-size:13px;
+      display:flex;align-items:center;gap:5px;
+      font-family:'Syne',sans-serif;font-weight:700;font-size:12px;
       cursor:pointer;border:none;color:#000;
       box-shadow:0 4px 14px rgba(56,189,248,.35);
       touch-action:manipulation;
+      position:relative;
+      transform:translateY(-2px);
     }
+    .mbb-ai-btn .ai-sparkle{font-size:13px;}
 
-    /* ════════════════════ MOBILE BOTTOM SHEET (list) ════════════════════ */
+    /* Active item name chip in bottom bar */
+    .mbb-active-chip{
+      display:none;
+      align-items:center;gap:6px;
+      font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;
+      padding:4px 10px;border-radius:12px;
+      background:rgba(56,189,248,.12);border:1px solid rgba(56,189,248,.3);
+      color:#38bdf8;white-space:nowrap;flex-shrink:0;
+    }
+    .mbb-active-chip.show{display:flex;}
+    .mac-eye{font-size:12px;}
+    .mac-name{max-width:120px;overflow:hidden;text-overflow:ellipsis;}
+    .mac-close{background:none;border:none;color:#38bdf8;font-size:15px;cursor:pointer;padding:0;margin-left:2px;opacity:.7;}
+    .mac-close:hover{opacity:1;}
+
+    /* ════ MOBILE BOTTOM SHEET ════ */
     .mob-sheet-overlay{
       display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:6500;
     }
@@ -163,10 +217,7 @@
       transform:translateY(100%);transition:transform .3s cubic-bezier(.32,1,.2,1);
     }
     .mob-sheet.open{transform:translateY(0);}
-    .mob-sheet-handle{
-      width:36px;height:4px;background:var(--border);border-radius:2px;
-      margin:12px auto 0;flex-shrink:0;
-    }
+    .mob-sheet-handle{width:36px;height:4px;background:var(--border);border-radius:2px;margin:12px auto 0;flex-shrink:0;}
     .mob-sheet-head{
       display:flex;align-items:center;justify-content:space-between;
       padding:10px 16px 8px;flex-shrink:0;
@@ -175,7 +226,6 @@
     .mob-sheet-close{background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;padding:4px;}
     .mob-sheet-body{overflow-y:auto;padding:0 12px 24px;flex:1;}
     .mob-sheet-body::-webkit-scrollbar{display:none;}
-    /* Each item row */
     .mob-item{
       display:flex;align-items:center;gap:12px;
       padding:12px 8px;border-radius:10px;cursor:pointer;
@@ -188,13 +238,12 @@
     .mob-item-name{font-size:14px;font-weight:600;color:var(--text);}
     .mob-item-sub{font-size:11px;color:var(--muted);margin-top:1px;}
     .mob-item-arrow{margin-left:auto;color:var(--muted);font-size:14px;}
-    .mob-item.active-row .mob-item-name{color:var(--river);}
     .mob-section-label{
       font-size:10px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;
       color:var(--muted);padding:12px 8px 4px;
     }
 
-    /* ════════════════════ MOBILE INFO PANEL (bottom sheet style) ════════════════════ */
+    /* ════ MOBILE INFO PANEL ════ */
     .mob-info-panel{
       position:fixed;bottom:var(--bottom-h);left:0;right:0;z-index:4500;
       background:rgba(18,23,35,0.98);border-top:1px solid var(--border);
@@ -212,7 +261,7 @@
     .mip-label{font-size:9px;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);}
     .mip-val{font-size:12px;color:var(--text);font-weight:500;line-height:1.3;}
 
-    /* ════════════════════ DESKTOP AI FAB ════════════════════ */
+    /* ════ DESKTOP AI FAB ════ */
     .ai-fab{
       position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
       height:40px;padding:0 20px;border-radius:20px;
@@ -225,7 +274,7 @@
     }
     .ai-fab:hover{transform:translateX(-50%) scale(1.06);box-shadow:0 10px 28px rgba(56,189,248,.5);}
 
-    /* ════════════════════ SEARCH MODAL ════════════════════ */
+    /* ════ SEARCH MODAL ════ */
     .search-overlay{
       position:fixed;inset:0;background:rgba(0,0,0,.72);
       backdrop-filter:blur(6px);z-index:7000;
@@ -272,7 +321,7 @@
     }
     .sm-chip:active{color:var(--text);border-color:rgba(255,255,255,.2);}
 
-    /* ════════════════════ MISC ════════════════════ */
+    /* ════ MISC ════ */
     .loading-bar{
       position:fixed;top:0;left:0;right:0;height:3px;
       background:linear-gradient(90deg,#38bdf8,#818cf8,#4ade80);
@@ -294,12 +343,12 @@
     .click-away{position:fixed;inset:0;z-index:5500;display:none;}
     .click-away.on{display:block;}
 
-    /* ════════════════════ MOBILE OVERRIDES ════════════════════ */
+    /* ════ MOBILE OVERRIDES ════ */
     @media(max-width:640px){
       .nav-items,.show-all-btn,.nav-sep:last-of-type,.ai-fab{display:none!important;}
       .mobile-bottom-bar{display:flex;}
       #map{bottom:var(--bottom-h);}
-      .info-card{display:none!important;} /* use mob-info-panel instead */
+      .info-card{display:none!important;}
       .filter-popup{top:58px;}
     }
     @media(min-width:641px){
@@ -322,6 +371,7 @@
   </button>
   <button class="show-all-btn" id="showAllBtn" onclick="toggleAll()">Show All</button>
   <div class="nav-sep"></div>
+  <!-- Scrollable nav strip — all items here left to right -->
   <div class="nav-items" id="navItems"></div>
 </div>
 
@@ -356,18 +406,36 @@
 <button class="ai-fab" onclick="openSearch()" title="Ctrl+K">✦ AI Search</button>
 
 <!-- ════ MOBILE BOTTOM BAR ════ -->
-<div class="mobile-bottom-bar">
-  <button class="filter-btn" style="font-size:12px;padding:6px 10px;" onclick="toggleFilter()">
-    <span id="mFilterIcon">🌊</span>
-    <span id="mFilterLabel">Rivers</span>
-    <span class="filter-arrow">▼</span>
-  </button>
-  <button class="mbb-show-btn" id="mShowAllBtn" onclick="toggleAll()">Show All</button>
-  <button class="mbb-list-btn" onclick="openMobSheet()">☰ List</button>
-  <button class="mbb-ai-btn" onclick="openSearch()">✦ AI</button>
+<div class="mobile-bottom-bar" id="mobileBottomBar">
+  <!-- Top row: controls -->
+  <div class="mbb-top-row">
+    <button class="filter-btn" style="font-size:11.5px;padding:5px 10px;" onclick="toggleFilter()">
+      <span id="mFilterIcon">🌊</span>
+      <span id="mFilterLabel">Rivers</span>
+      <span class="filter-arrow">▼</span>
+    </button>
+    <button class="mbb-show-btn" id="mShowAllBtn" onclick="toggleAll()">All</button>
+    <button class="mbb-list-btn" onclick="openMobSheet()">☰</button>
+
+    <!-- Active item chip (eye icon + name + close) -->
+    <div class="mbb-active-chip" id="mbbActiveChip">
+      <span class="mac-eye">👁</span>
+      <span class="mac-name" id="mbbActiveName">—</span>
+      <button class="mac-close" onclick="clearActiveItem()">×</button>
+    </div>
+
+    <!-- AI button — right, slightly up -->
+    <button class="mbb-ai-btn" onclick="openSearch()">
+      <span class="ai-sparkle">✦</span>
+      <span>AI</span>
+    </button>
+  </div>
+
+  <!-- Bottom row: scrollable item pills -->
+  <div class="mbb-scroll-row" id="mbbScrollRow"></div>
 </div>
 
-<!-- ════ MOBILE BOTTOM SHEET (river list) ════ -->
+<!-- ════ MOBILE BOTTOM SHEET ════ -->
 <div class="mob-sheet-overlay" id="mobSheetOverlay" onclick="closeMobSheet()"></div>
 <div class="mob-sheet" id="mobSheet">
   <div class="mob-sheet-handle"></div>
@@ -523,10 +591,12 @@ L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r
 let layerGroup=L.layerGroup().addTo(map);
 let activeCategory='rivers';
 let isAllShowing=false;
-let aiResults=[];
-let activeItem=null; // currently selected item for info
+let aiResults=[];        // [{name, item}]
+let activeItemData=null; // currently selected item
 
-// ── FILTER ──
+// ══════════════════════════════════════════════
+// FILTER
+// ══════════════════════════════════════════════
 function toggleFilter(){
   const p=document.getElementById('filterPopup'),b=document.getElementById('filterBtn'),ca=document.getElementById('clickAway');
   const open=p.classList.toggle('open');
@@ -542,41 +612,120 @@ function selectCategory(cat,el){
   document.querySelectorAll('.fp-option').forEach(o=>o.classList.remove('selected'));
   el.classList.add('selected');
   const m=CAT_META[cat];
-  // Update both desktop and mobile filter labels
   document.getElementById('filterIcon').textContent=m.icon;
   document.getElementById('filterLabel').textContent=m.label;
   const mfi=document.getElementById('mFilterIcon'), mfl=document.getElementById('mFilterLabel');
   if(mfi) mfi.textContent=m.icon; if(mfl) mfl.textContent=m.label;
   const msb=document.getElementById('mShowAllBtn');
-  if(msb){ msb.textContent='Show All'; msb.classList.remove('active'); }
+  if(msb){ msb.textContent='All'; msb.classList.remove('active'); }
   renderNav();
+  renderMobScrollRow();
   renderMobSheet();
+  clearActiveItem();
   setTimeout(()=>{ isAllShowing=false; toggleAll(); },100);
 }
 
-// ── DESKTOP NAV ──
+// ══════════════════════════════════════════════
+// DESKTOP NAV STRIP — all items scrollable
+// ══════════════════════════════════════════════
 function renderNav(){
   const strip=document.getElementById('navItems');
-  strip.innerHTML=''; isAllShowing=false; closeInfo();
+  strip.innerHTML='';
+  isAllShowing=false; closeInfo();
   const m=CAT_META[activeCategory];
   document.getElementById('showAllBtn').textContent=`Show All ${m.label}`;
   document.getElementById('showAllBtn').classList.remove('active');
-  Object.keys(DB[activeCategory]).forEach(name=>strip.appendChild(makeNavBtn(name,name,false)));
+
+  // Local DB items
+  Object.keys(DB[activeCategory]).forEach(name=>strip.appendChild(makeNavBtn(name,name,false,null)));
+
+  // AI results — always appended after local, with a divider label
   if(aiResults.length){
-    const sep=document.createElement('span'); sep.className='ai-section-label'; sep.textContent='— AI';
+    const sep=document.createElement('span'); sep.className='ai-section-label'; sep.textContent='— ✦ AI';
     strip.appendChild(sep);
-    aiResults.forEach((r,i)=>{ const btn=makeNavBtn(r.name,r.name,true); btn.dataset.aiIdx=i; strip.appendChild(btn); });
+    aiResults.forEach((r,i)=>{ const btn=makeNavBtn(r.name,r.name,true,i); strip.appendChild(btn); });
   }
 }
-function makeNavBtn(label,key,isAI){
+
+function makeNavBtn(label,key,isAI,aiIdx){
   const btn=document.createElement('button');
   btn.className='nav-item-btn'+(isAI?' ai-result':'');
   btn.textContent=label;
+  if(isAI) btn.dataset.aiIdx=aiIdx;
   btn.onclick=()=>{ isAI?selectItem(null,parseInt(btn.dataset.aiIdx),btn):selectItem(key,null,btn); };
   return btn;
 }
 
-// ── MOBILE SHEET ──
+// ══════════════════════════════════════════════
+// MOBILE SCROLL ROW — pills for all items
+// ══════════════════════════════════════════════
+function renderMobScrollRow(){
+  const row=document.getElementById('mbbScrollRow');
+  if(!row) return;
+  row.innerHTML='';
+
+  // Local items
+  Object.keys(DB[activeCategory]).forEach(name=>{
+    const item=DB[activeCategory][name];
+    row.appendChild(makePill(name,item.color,false,null,name));
+  });
+
+  // AI results
+  if(aiResults.length){
+    aiResults.forEach((r,i)=>{
+      row.appendChild(makePill(r.name,r.item.color,true,i,null));
+    });
+  }
+}
+
+function makePill(label,color,isAI,aiIdx,localKey){
+  const pill=document.createElement('div');
+  pill.className='mbb-item-pill'+(isAI?' ai-pill':'');
+  pill.dataset.key=localKey||'';
+  pill.dataset.aiIdx=aiIdx!==null?aiIdx:'';
+
+  const dot=document.createElement('span');
+  dot.className='mbb-pill-dot';
+  dot.style.background=color||'#38bdf8';
+  pill.appendChild(dot);
+
+  const nm=document.createElement('span');
+  nm.textContent=label;
+  pill.appendChild(nm);
+
+  pill.onclick=()=>{
+    selectItem(isAI?null:localKey, isAI?aiIdx:null, null);
+  };
+  return pill;
+}
+
+// Mark active pill
+function setActivePill(localKey, aiIdx){
+  document.querySelectorAll('.mbb-item-pill').forEach(p=>{
+    p.classList.remove('active-pill');
+    const style=CAT_META[activeCategory];
+    p.style.background='';
+    p.style.color='';
+    p.style.borderColor='';
+  });
+  // find and highlight
+  document.querySelectorAll('.mbb-item-pill').forEach(p=>{
+    const match=localKey!==null ? p.dataset.key===localKey : p.dataset.aiIdx===String(aiIdx);
+    if(match){
+      p.classList.add('active-pill');
+      const color=p.querySelector('.mbb-pill-dot')?.style.background||'#38bdf8';
+      p.style.background=color;
+      p.style.color='#000';
+      p.style.borderColor=color;
+      // scroll into view
+      p.scrollIntoView({behavior:'smooth',block:'nearest',inline:'center'});
+    }
+  });
+}
+
+// ══════════════════════════════════════════════
+// MOBILE SHEET
+// ══════════════════════════════════════════════
 function openMobSheet(){
   renderMobSheet();
   document.getElementById('mobSheetOverlay').classList.add('open');
@@ -591,12 +740,10 @@ function renderMobSheet(){
   const m=CAT_META[activeCategory];
   document.getElementById('mobSheetTitle').textContent=`${m.icon} ${m.label}`;
   body.innerHTML='';
-  // Local items
   Object.keys(DB[activeCategory]).forEach(name=>{
     const item=DB[activeCategory][name];
     body.appendChild(makeMobItem(name,item,false,null));
   });
-  // AI results
   if(aiResults.length){
     const sec=document.createElement('div'); sec.className='mob-section-label'; sec.textContent='✦ AI Results';
     body.appendChild(sec);
@@ -612,60 +759,97 @@ function makeMobItem(name,item,isAI,aiIdx){
   info.appendChild(nm); info.appendChild(sub);
   const arr=document.createElement('span'); arr.className='mob-item-arrow'; arr.textContent='›';
   div.appendChild(dot); div.appendChild(info); div.appendChild(arr);
-  div.onclick=()=>{
-    closeMobSheet();
-    selectItem(isAI?null:name, isAI?aiIdx:null, null);
-  };
+  div.onclick=()=>{ closeMobSheet(); selectItem(isAI?null:name, isAI?aiIdx:null, null); };
   return div;
 }
 
-// ── UNIFIED SELECT (desktop + mobile) ──
+// ══════════════════════════════════════════════
+// ACTIVE ITEM CHIP (mobile bottom bar)
+// ══════════════════════════════════════════════
+function showActiveChip(name){
+  const chip=document.getElementById('mbbActiveChip');
+  const nm=document.getElementById('mbbActiveName');
+  if(chip&&nm){ nm.textContent=name; chip.classList.add('show'); }
+}
+function hideActiveChip(){
+  const chip=document.getElementById('mbbActiveChip');
+  if(chip) chip.classList.remove('show');
+}
+function clearActiveItem(){
+  layerGroup.clearLayers(); closeInfo(); closeMobInfo();
+  hideActiveChip(); activeItemData=null;
+  clearActivePills();
+  isAllShowing=false;
+  document.getElementById('showAllBtn').classList.remove('active');
+  const msb=document.getElementById('mShowAllBtn'); if(msb){msb.textContent='All';msb.classList.remove('active');}
+  clearActive();
+}
+function clearActivePills(){
+  document.querySelectorAll('.mbb-item-pill').forEach(p=>{
+    p.classList.remove('active-pill');
+    p.style.background=''; p.style.color=''; p.style.borderColor='';
+  });
+}
+
+// ══════════════════════════════════════════════
+// UNIFIED SELECT
+// ══════════════════════════════════════════════
 function selectItem(localName, aiIdx, navBtn){
-  layerGroup.clearLayers(); closeInfo(); closeMobInfo(); isAllShowing=false;
+  layerGroup.clearLayers(); closeInfo(); closeMobInfo();
+  isAllShowing=false;
   clearActive();
   document.getElementById('showAllBtn').classList.remove('active');
-  const msb=document.getElementById('mShowAllBtn'); if(msb){msb.textContent='Show All';msb.classList.remove('active');}
+  const msb=document.getElementById('mShowAllBtn'); if(msb){msb.textContent='All';msb.classList.remove('active');}
 
-  let item, cat=activeCategory;
+  let item;
   if(localName!==null){
     item=DB[activeCategory][localName];
-    if(navBtn) navBtn.classList.add('active','c-'+CAT_META[cat].cls);
+    if(navBtn) navBtn.classList.add('active','c-'+CAT_META[activeCategory].cls);
+    setActivePill(localName, null);
   } else {
     const r=aiResults[aiIdx]; if(!r) return;
     item=r.item;
-    if(navBtn) navBtn.classList.add('active','c-'+CAT_META[cat].cls);
+    if(navBtn) navBtn.classList.add('active','c-'+CAT_META[activeCategory].cls);
+    setActivePill(null, aiIdx);
   }
   if(!item) return;
-  activeItem=item;
+  activeItemData=item;
 
   if(item.path?.length>1){ const l=drawPathRaw(item,false); map.fitBounds(l.getBounds(),{padding:[60,60]}); }
   else if(item.latlng){ drawCircleRaw(item,false); map.setView(item.latlng,7); }
 
-  if(isMobile()) showMobInfo(item,cat);
-  else showInfo(item,cat);
+  showActiveChip(item.name);
+
+  if(isMobile()) showMobInfo(item,activeCategory);
+  else showInfo(item,activeCategory);
 }
 
 function toggleAll(){
-  isAllShowing=!isAllShowing; layerGroup.clearLayers(); closeInfo(); closeMobInfo(); clearActive();
+  isAllShowing=!isAllShowing; layerGroup.clearLayers(); closeInfo(); closeMobInfo();
+  clearActivePills(); clearActive(); hideActiveChip(); activeItemData=null;
   const allBtn=document.getElementById('showAllBtn');
   const mAllBtn=document.getElementById('mShowAllBtn');
   const m=CAT_META[activeCategory];
   if(isAllShowing){
     allBtn.classList.add('active'); allBtn.textContent=`Hide ${m.label}`;
     if(mAllBtn){mAllBtn.classList.add('active');mAllBtn.textContent='Hide';}
+    // Draw local items
     Object.values(DB[activeCategory]).forEach(item=>{ item.path?drawPath(item,true):drawCircle(item,true); });
+    // Draw AI results too
     aiResults.forEach(r=>{ r.item.path?.length>1?drawPathRaw(r.item,true):r.item.latlng&&drawCircleRaw(r.item,true); });
     map.setView([22.5,78.0],5);
   } else {
     allBtn.classList.remove('active'); allBtn.textContent=`Show All ${m.label}`;
-    if(mAllBtn){mAllBtn.classList.remove('active');mAllBtn.textContent='Show All';}
+    if(mAllBtn){mAllBtn.classList.remove('active');mAllBtn.textContent='All';}
   }
 }
 function clearActive(){
   document.querySelectorAll('.nav-item-btn').forEach(b=>b.classList.remove('active','c-river','c-forest','c-mountain','c-desert'));
 }
 
-// ── DRAW ──
+// ══════════════════════════════════════════════
+// DRAW
+// ══════════════════════════════════════════════
 function drawPath(item,thin){ return drawPathRaw(item,thin); }
 function drawPathRaw(item,thin){
   const w=thin?2.8:5.5;
@@ -686,7 +870,9 @@ function drawCircleRaw(item,thin){
   }).addTo(layerGroup);
 }
 
-// ── DESKTOP INFO CARD ──
+// ══════════════════════════════════════════════
+// DESKTOP INFO CARD
+// ══════════════════════════════════════════════
 function showInfo(item,cat){
   const m=CAT_META[cat];
   const badge=document.getElementById('icBadge');
@@ -708,7 +894,9 @@ function closeInfo(){
   card.style.display='none'; card._dragged=false;
 }
 
-// ── MOBILE INFO PANEL ──
+// ══════════════════════════════════════════════
+// MOBILE INFO PANEL
+// ══════════════════════════════════════════════
 function showMobInfo(item,cat){
   const m=CAT_META[cat];
   const badge=document.getElementById('mipBadge');
@@ -722,9 +910,14 @@ function showMobInfo(item,cat){
   document.getElementById('mipV4').textContent=item.region||'—';
   document.getElementById('mobInfoPanel').style.display='block';
 }
-function closeMobInfo(){ document.getElementById('mobInfoPanel').style.display='none'; }
+function closeMobInfo(){
+  document.getElementById('mobInfoPanel').style.display='none';
+  hideActiveChip();
+}
 
-// ── DESKTOP DRAG ──
+// ══════════════════════════════════════════════
+// DESKTOP DRAG
+// ══════════════════════════════════════════════
 (function(){
   const el=document.getElementById('infoCard');
   let sx=0,sy=0,dragging=false;
@@ -736,15 +929,14 @@ function closeMobInfo(){ document.getElementById('mobInfoPanel').style.display='
     el.style.left=rect.left+'px'; el.style.top=rect.top+'px';
     el.style.right='auto'; el.style.bottom='auto'; el.style.transform='none';
     el._dragged=true;
-    document.onmousemove=e=>{
-      if(!dragging) return;
-      el.style.left=(e.clientX-sx)+'px'; el.style.top=(e.clientY-sy)+'px';
-    };
+    document.onmousemove=e=>{ if(!dragging)return; el.style.left=(e.clientX-sx)+'px'; el.style.top=(e.clientY-sy)+'px'; };
     document.onmouseup=()=>{ dragging=false; document.onmousemove=null; document.onmouseup=null; };
   });
 })();
 
-// ── AI SEARCH ──
+// ══════════════════════════════════════════════
+// AI SEARCH
+// ══════════════════════════════════════════════
 function openSearch(){ updateCacheCount(); document.getElementById('searchOverlay').classList.add('open'); setTimeout(()=>document.getElementById('searchQuery').focus(),80); }
 function closeSearch(){ document.getElementById('searchOverlay').classList.remove('open'); }
 function overlayBg(e){ if(e.target.id==='searchOverlay') closeSearch(); }
@@ -797,7 +989,11 @@ async function doAISearch(){
       });
       setCache(query,cat,newAI.map(r=>r.item));
     }
-    aiResults=newAI; renderNav(); renderMobSheet();
+    // AI results ADD to existing (don't clear local)
+    aiResults=newAI;
+    renderNav();
+    renderMobScrollRow();
+    renderMobSheet();
     showToast(`✦ ${newAI.length} result(s)`);
     if(newAI.length===1) selectItem(null,0,null);
   } catch(err){ showToast('❌ '+err.message); }
@@ -815,12 +1011,17 @@ function loadFromCache(cached){
   const paths=cached.items.filter(i=>i.path?.length>1);
   if(paths.length){ const b=paths.map(i=>L.polyline(i.path).getBounds()).reduce((a,c)=>a.extend(c)); map.fitBounds(b,{padding:[60,60]}); }
   else if(cached.items[0]?.latlng) map.setView(cached.items[0].latlng,5);
-  aiResults=newAI; renderNav(); renderMobSheet();
+  aiResults=newAI;
+  renderNav();
+  renderMobScrollRow();
+  renderMobSheet();
   showToast(`💾 ${newAI.length} results`);
   if(newAI.length===1) selectItem(null,0,null);
 }
 
-// ── UTILS ──
+// ══════════════════════════════════════════════
+// UTILS
+// ══════════════════════════════════════════════
 function showLoading(on){ document.getElementById('loadingBar').style.display=on?'block':'none'; }
 let toastT;
 function showToast(msg){ const t=document.getElementById('toast'); t.textContent=msg; t.classList.add('show'); clearTimeout(toastT); toastT=setTimeout(()=>t.classList.remove('show'),3200); }
@@ -831,11 +1032,14 @@ document.addEventListener('keydown',e=>{
 });
 document.getElementById('searchQuery').addEventListener('keypress',e=>{ if(e.key==='Enter') doAISearch(); });
 
-// ── BOOT ──
+// ══════════════════════════════════════════════
+// BOOT
+// ══════════════════════════════════════════════
 initCache();
 renderNav();
+renderMobScrollRow();
 renderMobSheet();
-setTimeout(()=>{ toggleAll(); },300);
+setTimeout(()=>{ isAllShowing=false; toggleAll(); },300);
 </script>
 </body>
 </html>

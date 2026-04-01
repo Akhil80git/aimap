@@ -25,11 +25,11 @@
     .main { display: flex; height: calc(100dvh - 58px); transition: height 0.3s ease; }
     .header.compact ~ .main { height: calc(100dvh - 46px); }
     
-    /* 🔴 Sidebar (Made it look less boring with a subtle background) */
+    /* Sidebar */
     .sidebar { width: 250px; background: #f8fafc; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; transition: left 0.3s ease; z-index: 20; }
     .close-sidebar-btn { display: none; padding: 12px; background: #f1f5f9; border-bottom: 1px solid var(--border-color); color: var(--text-main); font-weight: 600; cursor: pointer; border: none; text-align: left; font-size: 0.95rem; }
     
-    /* 🔴 Compact Buttons (Study on Left, Chat on Right) */
+    /* Compact Buttons (Study on Left, Chat on Right) */
     .sidebar-btns { display: flex; gap: 8px; padding: 14px 12px; border-bottom: 1px solid var(--border-color); }
     .btn-new, .btn-study { flex: 1; padding: 6px 10px; border: none; border-radius: 20px; font-weight: 600; font-size: 0.75rem; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); transition: transform 0.1s; }
     .btn-new:active, .btn-study:active { transform: scale(0.95); }
@@ -139,11 +139,11 @@
 
   <div class="main">
     <div class="sidebar" id="appSidebar">
-      <button class="close-sidebar-btn" onclick="toggleSidebar()">❮❮ Back to Chat</button>
+      <button class="close-sidebar-btn" onclick="closeSidebar()">❮❮ Back to Chat</button>
       
       <div class="sidebar-btns">
-        <button class="btn-study" onclick="setMode(true)" title="Extract questions from images">📚 Study</button>
-        <button class="btn-new" onclick="setMode(false)">+ Chat</button>
+        <button class="btn-study" onclick="setMode(true, true)" title="Extract questions from images">📚 Study</button>
+        <button class="btn-new" onclick="setMode(false, true)">+ Chat</button>
       </div>
       <div class="chat-list" id="chatList"></div>
     </div>
@@ -254,6 +254,7 @@
     // --- 📸 END LIVE CAMERA LOGIC ---
 
     function toggleSidebar() { document.getElementById('appSidebar').classList.toggle('open'); }
+    function closeSidebar() { document.getElementById('appSidebar').classList.remove('open'); }
 
     document.getElementById('messages').addEventListener('scroll', function() {
       const header = document.getElementById('appHeader');
@@ -261,7 +262,8 @@
       else header.classList.remove('compact');
     });
 
-    function setMode(study) {
+    // isFromButton param tells us if the user clicked the button manually
+    function setMode(study, isFromButton = false) {
       isStudyMode = study;
       activeQuestionContext = "";
       document.getElementById('currentModeInfo').className = `mode-indicator ${study ? 'study' : ''}`;
@@ -270,10 +272,19 @@
       pendingAttachments = [];
       updatePreview();
       
-      if(window.innerWidth <= 768) toggleSidebar();
+      // FIX: Only close sidebar if a button was clicked manually on mobile.
+      // Don't toggle it automatically on page load!
+      if(isFromButton && window.innerWidth <= 768) {
+         closeSidebar();
+      }
       
-      if(study) addMessage('assistant', "<b>Study Mode Active:</b> Upload images. I will extract unique questions from them.");
-      else createNewChat();
+      // FIX: Added a default greeting so the screen isn't blank on refresh
+      if(study) {
+        addMessage('assistant', "<b>Study Mode Active:</b> Upload images. I will extract unique questions from them.");
+      } else {
+        addMessage('assistant', "👋 <b>Hello! I am Gemini AI.</b> How can I help you today?");
+        createNewChat();
+      }
     }
 
     async function createNewChat() {
@@ -341,7 +352,7 @@
        activeQuestionContext = question; 
        addMessage('user', question);
        addMessage('assistant', answer);
-       if(window.innerWidth <= 768) toggleSidebar(); 
+       if(window.innerWidth <= 768) closeSidebar(); 
     }
 
     function showAllAnswers(encodedDataStr) {
@@ -349,7 +360,7 @@
        document.getElementById('messages').innerHTML = ''; 
        activeQuestionContext = "all batch questions";
        studyDataArray.forEach((item, i) => { addMessage('user', `Q${i+1}: ${item.question}`); addMessage('assistant', item.answer); });
-       if(window.innerWidth <= 768) toggleSidebar();
+       if(window.innerWidth <= 768) closeSidebar();
     }
 
     function buildSidebarDropdown(studyDataArray) {
@@ -407,7 +418,7 @@
           if (data.isStudyMode && data.studyData && data.studyData.length > 0) {
              addMessage('assistant', `✅ Extracted **${data.studyData.length} questions**. \n- Click **Extracted (${data.studyData.length})** in the sidebar to view.`);
              buildSidebarDropdown(data.studyData);
-             if(window.innerWidth <= 768) toggleSidebar(); 
+             if(window.innerWidth <= 768) closeSidebar(); 
           } else {
              addMessage('assistant', data.result);
           }
@@ -418,7 +429,8 @@
       }
     }
     
-    window.onload = () => setMode(false);
+    // FIX: Passing "false, false" ensures it loads in Normal mode WITHOUT opening sidebar
+    window.onload = () => setMode(false, false);
   </script>
 </body>
 </html>

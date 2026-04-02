@@ -1,11 +1,13 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="light">
+<html lang="en" data-theme="dark">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Cypher AI</title>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pacifico&family=Inter:wght@400;500;600;700;800&display=swap');
+
     :root {
       --primary:#6c63ff; --primary-dark:#5046e5; --study:#8b5cf6; --accent:#06d6a0;
       --bg:#f0f2ff; --bg2:#ffffff; --bg3:#e8eaf6;
@@ -24,47 +26,33 @@
     }
 
     *{margin:0;padding:0;box-sizing:border-box;}
-    body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);height:100dvh;overflow:hidden;color:var(--text);transition:background .3s,color .3s;}
-
+    body{font-family:'Inter',system-ui,sans-serif;background:var(--bg);height:100dvh;overflow:hidden;color:var(--text);transition:background .3s,color .3s;}
     .app{display:flex;height:100dvh;}
 
-    /* ===== SIDEBAR ===== */
-    .sidebar{
-      width:260px;background:var(--sidebar-bg);
-      display:flex;flex-direction:column;
-      z-index:30;transition:transform .3s cubic-bezier(.4,0,.2,1);
-      flex-shrink:0;overflow:hidden;
-    }
+    /* SIDEBAR */
+    .sidebar{width:260px;background:var(--sidebar-bg);display:flex;flex-direction:column;z-index:30;transition:transform .3s cubic-bezier(.4,0,.2,1);flex-shrink:0;overflow:hidden;}
+    .sidebar-brand{padding:16px 14px 14px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
+    .brand-row{display:flex;align-items:center;justify-content:space-between;gap:8px;}
+    .sidebar-close-btn{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);border-radius:8px;color:#94a3b8;font-size:.72rem;font-weight:700;cursor:pointer;padding:5px 9px;letter-spacing:.03em;transition:background .2s,color .2s,border-color .2s;font-family:monospace;flex-shrink:0;line-height:1;}
+    .sidebar-close-btn:hover{background:rgba(108,99,255,.2);color:#c4b5fd;border-color:rgba(108,99,255,.4);}
+    .brand-name{font-family:'Pacifico',cursive;font-size:1.6rem;background:linear-gradient(135deg,#6c63ff,#06d6a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+    .brand-tagline{font-size:0.68rem;color:var(--sidebar-muted);margin-top:3px;letter-spacing:.04em;font-style:italic;}
 
-    .sidebar-brand{padding:22px 18px 16px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
-    .brand-name{
-      font-size:1.55rem;font-weight:800;letter-spacing:-0.5px;
-      background:linear-gradient(135deg,#6c63ff,#06d6a0);
-      -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    }
-    .brand-tagline{font-size:0.68rem;color:var(--sidebar-muted);margin-top:2px;letter-spacing:.04em;}
-
-    .sidebar-btns{display:flex;flex-direction:column;gap:8px;padding:14px 12px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
-    .btn-new,.btn-study{
-      width:100%;padding:11px 14px;border:none;border-radius:12px;
-      font-weight:700;font-size:0.85rem;cursor:pointer;
-      display:flex;align-items:center;gap:10px;
-      transition:transform .15s,box-shadow .15s;letter-spacing:.02em;
-    }
-    .btn-new:active,.btn-study:active{transform:scale(.97);}
+    .sidebar-btns{display:flex;flex-direction:row;gap:8px;padding:12px;border-bottom:1px solid rgba(255,255,255,0.06);flex-shrink:0;}
+    .btn-new,.btn-study{flex:1;padding:10px 6px;border:none;border-radius:12px;font-weight:700;font-size:0.78rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;transition:transform .15s,box-shadow .15s;font-family:'Pacifico',cursive;}
+    .btn-new:active,.btn-study:active{transform:scale(.96);}
     .btn-study{background:linear-gradient(135deg,#8b5cf6,#6c63ff);color:white;box-shadow:0 4px 14px rgba(139,92,246,.35);}
     .btn-study:hover{box-shadow:0 6px 20px rgba(139,92,246,.5);}
     .btn-new{background:linear-gradient(135deg,#6c63ff,#06d6a0);color:white;box-shadow:0 4px 14px rgba(108,99,255,.3);}
     .btn-new:hover{box-shadow:0 6px 20px rgba(108,99,255,.45);}
 
-    .sidebar-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;}
-    .sidebar-scroll::-webkit-scrollbar{width:3px;}
-    .sidebar-scroll::-webkit-scrollbar-thumb{background:rgba(255,255,255,.08);border-radius:3px;}
+    .sidebar-scroll{flex:1;overflow-y:auto;display:flex;flex-direction:column;scrollbar-width:none;-ms-overflow-style:none;}
+    .sidebar-scroll::-webkit-scrollbar{display:none;}
+    .sidebar::-webkit-scrollbar{display:none;}.chat-section{scrollbar-width:none;-ms-overflow-style:none;}.chat-section::-webkit-scrollbar{display:none;}
 
     .study-section{padding:0 10px 10px;border-bottom:1px solid rgba(255,255,255,.06);flex-shrink:0;}
     .section-label{padding:12px 8px 6px;font-size:.65rem;font-weight:700;color:var(--sidebar-muted);text-transform:uppercase;letter-spacing:.1em;}
     .study-section-empty{padding:6px 8px 8px;font-size:.78rem;color:#4a5568;font-style:italic;}
-
     .study-group{background:rgba(255,255,255,.04);border-radius:10px;margin-bottom:6px;overflow:hidden;border:1px solid rgba(108,99,255,.2);}
     .study-header-container{display:flex;align-items:stretch;transition:background .2s;}
     .study-header-container:hover{background:rgba(108,99,255,.15);}
@@ -84,7 +72,6 @@
     .sidebar-footer{padding:12px;border-top:1px solid rgba(255,255,255,.06);flex-shrink:0;position:relative;}
     .settings-btn{width:100%;padding:10px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.08);border-radius:12px;color:var(--sidebar-muted);font-size:.82rem;font-weight:600;cursor:pointer;display:flex;align-items:center;gap:10px;transition:background .2s,color .2s;}
     .settings-btn:hover{background:rgba(255,255,255,.1);color:#e2e8f0;}
-
     .settings-panel{display:none;position:absolute;bottom:70px;left:12px;width:232px;background:#1e1e3a;border:1px solid rgba(108,99,255,.3);border-radius:16px;padding:16px;z-index:50;box-shadow:0 8px 32px rgba(0,0,0,.4);}
     .settings-panel.open{display:block;}
     .settings-title{font-size:.8rem;font-weight:700;color:#e2e8f0;margin-bottom:12px;}
@@ -95,46 +82,60 @@
     .theme-opt.active{border-color:#6c63ff;}
     .theme-opt-icon{font-size:1.2rem;display:block;margin-bottom:3px;}
 
-    /* ===== MAIN ===== */
+    /* MAIN */
     .main-content{flex:1;display:flex;flex-direction:column;min-width:0;background:var(--bg);}
-
-    .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0;box-shadow:var(--shadow);}
+    .header{background:var(--bg2);border-bottom:1px solid var(--border);padding:10px 16px;display:flex;align-items:center;gap:8px;flex-shrink:0;box-shadow:var(--shadow);}
     .menu-btn{width:36px;height:36px;background:none;border:1px solid var(--border);border-radius:10px;cursor:pointer;color:var(--text-muted);font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:background .2s;flex-shrink:0;}
     .menu-btn:hover{background:var(--bg3);}
     .header-title{flex:1;}
-    .header-title h2{font-size:1rem;font-weight:800;margin:0;background:linear-gradient(135deg,#6c63ff,#06d6a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .header-title h2{font-family:'Pacifico',cursive;font-size:1.1rem;font-weight:400;margin:0;background:linear-gradient(135deg,#6c63ff,#06d6a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
     .mode-pill{font-size:.68rem;padding:3px 9px;border-radius:20px;background:var(--bg3);color:var(--text-muted);font-weight:600;display:inline-block;margin-top:1px;}
     .mode-pill.study{background:#ede9fe;color:#6d28d9;}
     [data-theme="dark"] .mode-pill.study{background:#3730a3;color:#c4b5fd;}
 
-    .cam-header-btn{width:38px;height:38px;background:linear-gradient(135deg,#6c63ff,#8b5cf6);border:none;border-radius:12px;cursor:pointer;color:white;font-size:1rem;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(108,99,255,.35);transition:transform .15s,box-shadow .15s;flex-shrink:0;}
-    .cam-header-btn:hover{transform:scale(1.05);box-shadow:0 5px 16px rgba(108,99,255,.5);}
+    .header-actions{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+    .header-action-btn{width:38px;height:38px;border:none;border-radius:12px;cursor:pointer;color:white;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:transform .15s,box-shadow .15s;flex-shrink:0;}
+    .header-action-btn:hover{transform:scale(1.06);}
+    .btn-ocr{background:linear-gradient(135deg,#6c63ff,#8b5cf6);box-shadow:0 3px 10px rgba(108,99,255,.35);}
+    .btn-ocr:hover{box-shadow:0 5px 16px rgba(108,99,255,.5);}
 
-    /* ===== MESSAGES ===== */
+    /* MCQ button — green=off, red=on */
+    .btn-mcq{background:linear-gradient(135deg,#06d6a0,#059669);box-shadow:0 3px 10px rgba(6,214,160,.35);font-size:1.15rem;}
+    .btn-mcq:hover{box-shadow:0 5px 16px rgba(6,214,160,.5);}
+    .btn-mcq.mcq-on{background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 3px 10px rgba(239,68,68,.4);}
+    .btn-mcq.loading{opacity:.65;cursor:not-allowed;animation:mcqpulse 1s infinite;}
+    @keyframes mcqpulse{0%,100%{opacity:.65}50%{opacity:1}}
+
+    /* MCQ mode strip */
+    .mcq-mode-strip{display:none;background:rgba(6,214,160,.08);border-bottom:1px solid rgba(6,214,160,.2);padding:5px 16px;font-size:.72rem;color:#06d6a0;text-align:center;flex-shrink:0;}
+    .mcq-mode-strip.visible{display:block;}
+
+    /* MESSAGES */
     .messages{flex:1;padding:16px;overflow-y:auto;display:flex;flex-direction:column;gap:14px;scroll-behavior:smooth;}
     .messages::-webkit-scrollbar{width:4px;}
     .messages::-webkit-scrollbar-thumb{background:rgba(108,99,255,.2);border-radius:4px;}
 
     .welcome-banner{text-align:center;padding:32px 20px 20px;flex-shrink:0;}
-    .welcome-logo{font-size:3rem;font-weight:900;letter-spacing:-2px;background:linear-gradient(135deg,#6c63ff,#06d6a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:8px;}
+    .welcome-logo{font-family:'Pacifico',cursive;font-size:3rem;font-weight:400;background:linear-gradient(135deg,#6c63ff,#06d6a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1;margin-bottom:8px;}
     .welcome-greeting{font-size:1.1rem;font-weight:700;color:var(--text);margin-bottom:5px;}
     .welcome-sub{font-size:.85rem;color:var(--text-muted);}
+    .welcome-tip{margin-top:16px;font-size:.78rem;color:var(--text-muted);background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:10px 16px;display:inline-block;line-height:1.5;}
 
     .message-wrapper{display:flex;flex-direction:column;max-width:82%;}
     .message-wrapper.user{align-self:flex-end;align-items:flex-end;}
     .message-wrapper.assistant{align-self:flex-start;align-items:flex-start;}
-
     .message{padding:11px 15px;line-height:1.65;font-size:.92rem;word-wrap:break-word;overflow-wrap:break-word;}
     .user .message{background:var(--msg-user-bg);color:white;border-radius:18px 18px 4px 18px;box-shadow:0 3px 12px rgba(108,99,255,.3);}
     .assistant .message{background:var(--msg-ai-bg);border:1px solid var(--msg-ai-border);border-radius:18px 18px 18px 4px;box-shadow:0 1px 4px rgba(0,0,0,.06);color:var(--text);}
-
     .msg-attachments{display:flex;gap:6px;margin-bottom:7px;flex-wrap:wrap;}
     .msg-thumb{width:60px;height:60px;border-radius:10px;object-fit:cover;border:2px solid rgba(255,255,255,.3);box-shadow:0 2px 8px rgba(0,0,0,.15);}
     .msg-file-icon{background:rgba(0,0,0,.2);padding:5px 10px;border-radius:8px;font-size:.78rem;color:white;}
     .message pre{background:#1e293b;color:#f8fafc;padding:12px;border-radius:8px;overflow-x:auto;margin:8px 0;font-size:.82rem;}
 
-    /* ===== INPUT ===== */
-    .input-container{padding:12px 14px 16px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;}
+    /* INPUT */
+    .input-container{padding:8px 14px 14px;background:var(--bg2);border-top:1px solid var(--border);flex-shrink:0;}
+    .input-hint{font-size:.72rem;color:var(--text-muted);padding:0 4px 5px;min-height:18px;transition:opacity .25s;opacity:0;font-style:italic;}
+    .input-hint.show{opacity:1;}
     .input-wrapper{background:var(--input-bg);border:1.5px solid var(--border);border-radius:20px;display:flex;flex-direction:column;overflow:hidden;box-shadow:var(--shadow);transition:border-color .2s;}
     .input-wrapper:focus-within{border-color:var(--primary);}
     .attachment-preview{display:none;padding:10px 14px;border-bottom:1px solid var(--border);background:var(--bg3);gap:8px;flex-wrap:wrap;}
@@ -149,43 +150,40 @@
     .send-btn{width:38px;height:38px;background:linear-gradient(135deg,#6c63ff,#8b5cf6);color:white;border:none;border-radius:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 3px 10px rgba(108,99,255,.35);transition:transform .15s;flex-shrink:0;font-size:1rem;}
     .send-btn:active{transform:scale(.9);}
 
-    /* ===== QUIZ STYLES ===== */
-    .quiz-wrap{width:100%;max-width:520px;}
-    .quiz-top-label{font-size:.75rem;font-weight:700;color:var(--primary);margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+    /* QUIZ */
+    .quiz-wrap{width:100%;max-width:540px;}
+    .quiz-top-label{font-size:.76rem;font-weight:700;color:#06d6a0;margin-bottom:10px;display:flex;align-items:center;gap:8px;}
+    .quiz-score-txt{margin-left:auto;color:var(--text-muted);font-weight:500;font-size:.74rem;}
     .quiz-progress-bar{height:4px;background:var(--bg3);border-radius:2px;margin-bottom:14px;overflow:hidden;}
     .quiz-progress-fill{height:100%;background:linear-gradient(90deg,#6c63ff,#06d6a0);border-radius:2px;transition:width .35s ease;}
     .quiz-q-card{background:var(--msg-ai-bg);border:1px solid var(--msg-ai-border);border-radius:14px;padding:14px 16px;margin-bottom:10px;}
     .quiz-q-num{font-size:.68rem;color:var(--text-muted);font-weight:700;margin-bottom:5px;text-transform:uppercase;letter-spacing:.06em;}
     .quiz-q-text{font-size:.92rem;font-weight:700;color:var(--text);margin-bottom:12px;line-height:1.5;}
     .quiz-opts{display:flex;flex-direction:column;gap:7px;}
-    .quiz-opt{padding:9px 14px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer;font-size:.84rem;color:var(--text);background:var(--bg2);display:flex;align-items:center;gap:10px;transition:border-color .15s,background .15s,transform .1s;user-select:none;}
-    .quiz-opt:hover:not(.locked){border-color:var(--primary);background:var(--bg3);transform:translateX(2px);}
-    .quiz-opt.correct{background:#d1fae5;border-color:#059669;color:#065f46;}
-    .quiz-opt.wrong{background:#fee2e2;border-color:#ef4444;color:#991b1b;}
-    [data-theme="dark"] .quiz-opt.correct{background:#064e3b;border-color:#059669;color:#6ee7b7;}
-    [data-theme="dark"] .quiz-opt.wrong{background:#450a0a;border-color:#ef4444;color:#fca5a5;}
-    .quiz-opt-letter{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;color:var(--text-muted);transition:all .15s;}
+    .quiz-opt{padding:10px 14px;border-radius:10px;border:1.5px solid var(--border);cursor:pointer;font-size:.84rem;color:var(--text);background:var(--bg2);display:flex;align-items:center;gap:10px;transition:border-color .15s,background .15s,transform .12s;user-select:none;}
+    .quiz-opt:hover:not(.locked){border-color:var(--primary);background:var(--bg3);transform:translateX(3px);}
+    .quiz-opt.correct{background:#064e3b;border-color:#059669;color:#6ee7b7;}
+    .quiz-opt.wrong{background:#450a0a;border-color:#ef4444;color:#fca5a5;}
+    [data-theme="light"] .quiz-opt.correct{background:#d1fae5;border-color:#059669;color:#065f46;}
+    [data-theme="light"] .quiz-opt.wrong{background:#fee2e2;border-color:#ef4444;color:#991b1b;}
+    .quiz-opt-letter{width:24px;height:24px;border-radius:50%;border:1.5px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;color:var(--text-muted);transition:all .2s;}
     .quiz-opt.correct .quiz-opt-letter{background:#059669;border-color:#059669;color:white;}
     .quiz-opt.wrong .quiz-opt-letter{background:#ef4444;border-color:#ef4444;color:white;}
-    .quiz-result-card{background:var(--bg2);border:1px solid var(--msg-ai-border);border-radius:16px;padding:20px;text-align:center;margin-top:6px;display:none;}
-    .quiz-result-score{font-size:2rem;font-weight:900;background:linear-gradient(135deg,#6c63ff,#06d6a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
-    .quiz-result-msg{font-size:.82rem;color:var(--text-muted);margin-top:5px;}
+    .quiz-result-card{background:var(--bg2);border:1px solid var(--msg-ai-border);border-radius:16px;padding:22px;text-align:center;margin-top:8px;display:none;}
+    .quiz-result-score{font-size:2.2rem;font-weight:900;background:linear-gradient(135deg,#6c63ff,#06d6a0);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1.2;}
+    .quiz-result-msg{font-size:.83rem;color:var(--text-muted);margin-top:6px;}
     .quiz-retry-btn{margin-top:14px;padding:9px 22px;border-radius:12px;border:1.5px solid var(--border);background:var(--bg2);color:var(--text);font-size:.83rem;cursor:pointer;font-weight:700;transition:background .2s,border-color .2s;}
     .quiz-retry-btn:hover{background:var(--bg3);border-color:var(--primary);}
 
-    /* ===== CAMERA — FULLSCREEN ===== */
+    /* CAMERA */
     .camera-modal{display:none;position:fixed;inset:0;background:#000;z-index:9999;flex-direction:column;}
     .camera-modal.open{display:flex;}
-
     #videoElement{flex:1;width:100%;object-fit:cover;display:block;background:#000;}
     #canvasElement{display:none;}
-
     .cam-close{position:absolute;top:16px;left:16px;width:40px;height:40px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);border-radius:50%;color:white;font-size:1.1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);z-index:2;}
-
     .cam-zoom-bar{position:absolute;top:16px;right:16px;display:flex;flex-direction:column;gap:8px;z-index:2;}
     .zoom-btn{width:40px;height:40px;background:rgba(0,0,0,.55);border:1px solid rgba(255,255,255,.2);border-radius:50%;color:white;font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;backdrop-filter:blur(8px);transition:background .2s;font-weight:700;}
     .zoom-btn:active{background:rgba(108,99,255,.7);}
-
     .cam-bar{position:absolute;bottom:0;left:0;right:0;padding:18px 20px 36px;background:linear-gradient(to top,rgba(0,0,0,.82) 0%,transparent 100%);display:flex;align-items:center;gap:12px;z-index:2;}
     .cam-bar-btn{flex:1;padding:14px 10px;border:none;border-radius:16px;font-weight:700;font-size:.9rem;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:8px;transition:transform .15s,opacity .15s;}
     .cam-bar-btn:active{transform:scale(.95);opacity:.85;}
@@ -199,39 +197,35 @@
       .sidebar{position:fixed;left:0;top:0;height:100dvh;transform:translateX(-100%);}
       .sidebar.open{transform:translateX(0);}
       .message-wrapper{max-width:92%;}
-      .input-container{padding:10px 10px 14px;}
+      .input-container{padding:8px 10px 12px;}
     }
-    @media(min-width:769px){
-      .menu-btn{display:none;}
-    }
+    @media(min-width:769px){.menu-btn{display:none;}}
   </style>
 </head>
 <body>
 <div class="app">
 
-  <!-- ===== SIDEBAR ===== -->
+  <!-- SIDEBAR -->
   <div class="sidebar" id="appSidebar">
-
     <div class="sidebar-brand">
-      <div class="brand-name">⚡ Cypher</div>
-      <div class="brand-tagline">Your intelligent AI companion</div>
+      <div class="brand-row">
+        <div>
+          <div class="brand-name">⚡ Cypher</div>
+          <div class="brand-tagline">your intelligent AI companion</div>
+        </div>
+        <button class="sidebar-close-btn" onclick="closeSidebar()" title="Sidebar band karo">‹‹‹</button>
+      </div>
     </div>
 
     <div class="sidebar-btns">
-      <button class="btn-study" onclick="setMode(true,true)">
-        <span>📚</span> Study Mode
-      </button>
-      <button class="btn-new" onclick="setMode(false,true)">
-        <span>✦</span> New Chat
-      </button>
+      <button class="btn-study" onclick="setMode(true,true)">📚 Study</button>
+      <button class="btn-new" onclick="setMode(false,true)">✦ New Chat</button>
     </div>
 
     <div class="sidebar-scroll">
       <div class="study-section">
         <div class="section-label">📚 Study Extractions</div>
-        <div id="activeStudyDropdowns">
-          <div class="study-section-empty">No extractions yet</div>
-        </div>
+        <div id="activeStudyDropdowns"><div class="study-section-empty">No extractions yet</div></div>
       </div>
       <div class="chat-section">
         <div class="section-label">💬 Recent Chats</div>
@@ -240,18 +234,12 @@
     </div>
 
     <div class="sidebar-footer">
-      <button class="settings-btn" onclick="toggleSettings()">
-        <span>⚙️</span> Settings &amp; Theme
-      </button>
+      <button class="settings-btn" onclick="toggleSettings()"><span>⚙️</span> Settings &amp; Theme</button>
       <div class="settings-panel" id="settingsPanel">
         <div class="settings-title">Choose Theme</div>
         <div class="theme-options">
-          <div class="theme-opt light active" id="themeLight" onclick="setTheme('light')">
-            <span class="theme-opt-icon">☀️</span> Light
-          </div>
-          <div class="theme-opt dark" id="themeDark" onclick="setTheme('dark')">
-            <span class="theme-opt-icon">🌙</span> Dark
-          </div>
+          <div class="theme-opt light" id="themeLight" onclick="setTheme('light')"><span class="theme-opt-icon">☀️</span>Light</div>
+          <div class="theme-opt dark active" id="themeDark" onclick="setTheme('dark')"><span class="theme-opt-icon">🌙</span>Dark</div>
         </div>
       </div>
     </div>
@@ -259,30 +247,38 @@
 
   <div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
 
-  <!-- ===== MAIN ===== -->
+  <!-- MAIN -->
   <div class="main-content">
-
     <div class="header">
       <button class="menu-btn" onclick="toggleSidebar()">☰</button>
       <div class="header-title">
         <h2>⚡ Cypher AI</h2>
         <span id="currentModeInfo" class="mode-pill">Normal Mode</span>
       </div>
-      <button class="cam-header-btn" onclick="openCamera()" title="Live OCR Scanner">📷</button>
+      <div class="header-actions">
+        <button class="header-action-btn btn-mcq" id="mcqHeaderBtn" onclick="toggleMCQMode()" title="MCQ Mode ON karo">📝</button>
+        <button class="header-action-btn btn-ocr" onclick="openCamera()" title="Live OCR Scanner">📷</button>
+      </div>
+    </div>
+
+    <!-- MCQ MODE STRIP — sirf info, koi message nahi bhejta -->
+    <div class="mcq-mode-strip" id="mcqModeStrip">
+      📝 MCQ Mode ON — Topic type karo aur send karo, quiz ban jayega!
     </div>
 
     <div class="messages" id="messages"></div>
 
     <div class="input-container">
+      <div class="input-hint" id="inputHint"></div>
       <div class="input-wrapper">
         <div id="attachmentPreview" class="attachment-preview"></div>
         <div class="input-row">
           <label class="icon-btn" title="Attach files">
             📎<input type="file" multiple accept="image/*,.pdf,.txt" style="display:none;" onchange="handleMultipleUpload(event)">
           </label>
-          <!-- ===== MCQ QUIZ BUTTON ===== -->
-          <button class="icon-btn" title="MCQ Quiz Mode" onclick="startQuizMode()" style="font-size:1.1rem;">📝</button>
-          <input type="text" id="userInput" placeholder="Ask Cypher anything..." onkeypress="if(event.key==='Enter')sendMessage()">
+          <input type="text" id="userInput" placeholder="Ask Cypher anything..."
+            onkeypress="if(event.key==='Enter')sendMessage()"
+            oninput="onInputChange(this.value)">
           <button class="send-btn" onclick="sendMessage()">➤</button>
         </div>
       </div>
@@ -290,7 +286,7 @@
   </div>
 </div>
 
-<!-- ===== CAMERA MODAL — Fullscreen ===== -->
+<!-- CAMERA -->
 <div class="camera-modal" id="cameraModal">
   <video id="videoElement" autoplay playsinline></video>
   <canvas id="canvasElement"></canvas>
@@ -306,474 +302,494 @@
 </div>
 
 <script>
-  const API_BASE_URL = "https://gemini-chatall.onrender.com";
-  let currentChatId=null,isStudyMode=false,pendingAttachments=[],activeQuestionContext="",videoStream=null,currentZoom=1,maxZoom=4;
+ const API_BASE_URL = "https://gemini-chatall.onrender.com";
+// sessionStorage key — tab close ya hard refresh pe clear, soft navigation pe quiz restore
+const QUIZ_SESSION_KEY = 'cypher_quiz_session';
 
-  /* ===== QUIZ STATE ===== */
-  let quizData=[], quizAnswered=[], quizCorrect=0;
+let currentChatId=null, isStudyMode=false, pendingAttachments=[], activeQuestionContext="";
+let videoStream=null, currentZoom=1, maxZoom=4;
 
-  /* ===== THEME ===== */
-  function setTheme(t){
-    document.documentElement.setAttribute('data-theme',t);
-    localStorage.setItem('cypher-theme',t);
-    document.getElementById('themeLight').classList.toggle('active',t==='light');
-    document.getElementById('themeDark').classList.toggle('active',t==='dark');
-    document.getElementById('settingsPanel').classList.remove('open');
-  }
-  function toggleSettings(){ document.getElementById('settingsPanel').classList.toggle('open'); }
-  document.addEventListener('click',e=>{
-    const sp=document.getElementById('settingsPanel');
-    if(sp.classList.contains('open')&&!sp.contains(e.target)&&!e.target.closest('.settings-btn')) sp.classList.remove('open');
-  });
+// MCQ state
+let mcqModeActive=false;   // Toggle state — sirf mode, koi auto-send nahi
+let quizData=[], quizAnswered=[], quizCorrect=0, quizPicked=[];
+let currentQuizBlockId=null;
 
-  /* ===== CAMERA ===== */
-  async function openCamera(){
-    const modal=document.getElementById('cameraModal');
-    const video=document.getElementById('videoElement');
-    modal.classList.add('open');
-    currentZoom=1;
-    try{
-      videoStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:1920},height:{ideal:1080}}});
-      video.srcObject=videoStream;
-      const track=videoStream.getVideoTracks()[0];
-      const caps=track.getCapabilities?.()??{};
-      if(caps.zoom) maxZoom=caps.zoom.max||4;
-    }catch(err){alert("Camera access denied.");closeCamera();}
-  }
-  function closeCamera(){
-    document.getElementById('cameraModal').classList.remove('open');
-    if(videoStream) videoStream.getTracks().forEach(t=>t.stop());
-    videoStream=null; currentZoom=1;
-    document.getElementById('videoElement').style.transform='';
-  }
-  function applyZoom(z){
-    if(!videoStream)return;
-    const track=videoStream.getVideoTracks()[0];
-    const caps=track.getCapabilities?.()??{};
-    if(caps.zoom){
-      currentZoom=Math.min(Math.max(z,1),maxZoom);
-      track.applyConstraints({advanced:[{zoom:currentZoom}]}).catch(()=>{});
-    }else{
-      currentZoom=Math.min(Math.max(z,1),5);
-      document.getElementById('videoElement').style.transform=`scale(${currentZoom})`;
-      document.getElementById('videoElement').style.transformOrigin='center center';
+/* ========== MCQ TOGGLE — ONLY TOGGLES MODE, NEVER AUTO-SENDS ========== */
+function toggleMCQMode(){
+  const btn=document.getElementById('mcqHeaderBtn');
+  const strip=document.getElementById('mcqModeStrip');
+  const pill=document.getElementById('currentModeInfo');
+
+  if(btn.classList.contains('loading')) return;
+
+  if(mcqModeActive){
+    // Turn OFF
+    mcqModeActive=false;
+    btn.classList.remove('mcq-on');
+    btn.title='MCQ Mode ON karo';
+    strip.classList.remove('visible');
+    pill.className='mode-pill';
+    pill.textContent='Normal Mode';
+    // Agar quiz visible hai toh hatao
+    if(currentQuizBlockId){
+      document.getElementById(currentQuizBlockId)?.remove();
+      currentQuizBlockId=null;
     }
+    clearQuizSession();
+  } else {
+    // Turn ON — SIRF mode activate karo, koi message mat bhejo
+    mcqModeActive=true;
+    btn.classList.add('mcq-on');
+    btn.title='MCQ Mode OFF karo (dobara click karo)';
+    strip.classList.add('visible');
+    pill.className='mode-pill study';
+    pill.textContent='📝 MCQ Mode';
+    // Input field mein placeholder update
+    document.getElementById('userInput').placeholder='Topic likho (e.g. "10 history mcq") aur bhejo...';
   }
-  function zoomIn(){applyZoom(currentZoom+0.5);}
-  function zoomOut(){applyZoom(currentZoom-0.5);}
+}
 
-  function captureImage(){
-    const video=document.getElementById('videoElement');
-    const canvas=document.getElementById('canvasElement');
-    canvas.width=video.videoWidth; canvas.height=video.videoHeight;
-    canvas.getContext('2d').drawImage(video,0,0,canvas.width,canvas.height);
-    closeCamera();
-    processScannedImage(canvas.toDataURL('image/jpeg',0.85));
-  }
-  async function processScannedImage(base64Data){
-    const el=document.getElementById('userInput');
-    const orig=el.placeholder;
-    el.value=""; el.placeholder="Scanning text... ⏳"; el.disabled=true;
-    try{
-      const res=await fetch(`${API_BASE_URL}/api/chat/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:"Extract all readable text exactly.",chatId:null,attachments:[{type:'image',data:base64Data,name:'scan.jpg',mimeType:'image/jpeg'}],isStudyMode:false})});
-      const data=await res.json();
-      if(data.success) el.value=data.result.replace(/```/g,'').trim();
-    }catch(e){alert("Error connecting to server.");}
-    finally{el.placeholder=orig;el.disabled=false;el.focus();}
-  }
+/* ========== QUIZ SESSION STORAGE (answers reset on refresh, questions persist in session) ========== */
+function saveQuizSession(){
+  try{
+    sessionStorage.setItem(QUIZ_SESSION_KEY, JSON.stringify({
+      data: quizData,
+      answered: quizAnswered,
+      correct: quizCorrect,
+      picked: quizPicked
+    }));
+  }catch(e){}
+}
+function clearQuizSession(){
+  try{ sessionStorage.removeItem(QUIZ_SESSION_KEY); }catch(e){}
+}
+function restoreQuizSession(){
+  try{
+    const s=sessionStorage.getItem(QUIZ_SESSION_KEY);
+    if(!s) return;
+    const saved=JSON.parse(s);
+    if(!Array.isArray(saved.data)||!saved.data.length) return;
 
-  /* ===== SIDEBAR ===== */
-  function toggleSidebar(){
-    document.getElementById('appSidebar').classList.toggle('open');
-    document.getElementById('sidebarOverlay').classList.toggle('show');
-  }
-  function closeSidebar(){
-    document.getElementById('appSidebar').classList.remove('open');
-    document.getElementById('sidebarOverlay').classList.remove('show');
-  }
-
-  /* ===== MODE ===== */
-  function setMode(study,isFromButton=false){
-    isStudyMode=study; activeQuestionContext=""; currentChatId=null;
-    const pill=document.getElementById('currentModeInfo');
-    pill.className=`mode-pill ${study?'study':''}`;
-    pill.innerText=study?'📚 Study Mode':'Normal Mode';
-    document.getElementById('messages').innerHTML='';
-    document.getElementById('activeStudyDropdowns').innerHTML='<div class="study-section-empty">No extractions yet</div>';
-    pendingAttachments=[]; updatePreview();
-    if(isFromButton&&window.innerWidth<=768) closeSidebar();
-    if(study){
-      addMessage('assistant',"**Study Mode Active** 📚\nUpload images or PDFs to extract and answer questions automatically.");
-    }else{
-      showWelcome();
-    }
-  }
-
-  function showWelcome(){
-    const msgs=document.getElementById('messages');
-    const h=new Date().getHours();
-    const gr=h<12?"Good morning ☀️":h<17?"Good afternoon 🌤️":"Good evening 🌙";
-    const tips=["Ask me anything — I think, therefore I answer ⚡","Ready to explore ideas with you 🚀","Your AI brain is warmed up 🧠","Let's build something great together ✦","Curiosity is the engine of achievement 🔥"];
-    const tip=tips[Math.floor(Math.random()*tips.length)];
-    const banner=document.createElement('div');
-    banner.className='welcome-banner';
-    banner.innerHTML=`<div class="welcome-logo">Cypher</div><div class="welcome-greeting">${gr}!</div><div class="welcome-sub">${tip}</div><div style="margin-top:18px;font-size:.8rem;color:var(--text-muted);">💡 Tip: Click <strong>📝</strong> in the input bar to start an MCQ Quiz!</div>`;
-    msgs.appendChild(banner);
-  }
-
-  /* ===== HISTORY ===== */
-  async function loadHistory(){
-    try{
-      const res=await fetch(`${API_BASE_URL}/api/chat/history/all`);
-      const data=await res.json();
-      const chatList=document.getElementById('chatList');
-      chatList.innerHTML='';
-      if(data.success&&data.chats.length>0){
-        const studyChats=data.chats.filter(c=>c.mode==='study');
-        document.getElementById('activeStudyDropdowns').innerHTML='<div class="study-section-empty">No extractions yet</div>';
-        for(const chat of studyChats){
-          const chatId=chat._id||chat.chatId;
-          try{
-            const dr=await fetch(`${API_BASE_URL}/api/chat/${chatId}`);
-            const dd=await dr.json();
-            if(dd.success&&dd.chat?.studyData?.length>0) buildSidebarDropdown(dd.chat.studyData);
-          }catch(e){}
-        }
-        const normalChats=data.chats.filter(c=>c.mode!=='study');
-        if(normalChats.length===0){
-          chatList.innerHTML='<div style="padding:6px 8px;font-size:.78rem;color:#4a5568;font-style:italic;">No chats yet</div>';
-        }else{
-          normalChats.forEach(chat=>{
-            const chatId=chat._id||chat.chatId;
-            const el=document.createElement('div');
-            el.className='history-item';
-            el.innerHTML=`<span class="hi-dot"></span>${chat.title||'Conversation'}`;
-            el.onclick=()=>loadOldChat(chatId);
-            chatList.appendChild(el);
-          });
-        }
-      }else{
-        chatList.innerHTML='<div style="padding:6px 8px;font-size:.78rem;color:#4a5568;font-style:italic;">No chats yet</div>';
-      }
-    }catch(err){console.error("History error",err);}
-  }
-
-  async function loadOldChat(chatId){
-    currentChatId=chatId;
-    document.getElementById('messages').innerHTML='';
-    addMessage('assistant','⏳ Loading chat...');
-    try{
-      const res=await fetch(`${API_BASE_URL}/api/chat/${chatId}`);
-      const data=await res.json();
-      if(!data.success||!data.chat) throw new Error("Not found");
-      document.getElementById('messages').innerHTML='';
-      isStudyMode=(data.chat.mode==='study');
-      const pill=document.getElementById('currentModeInfo');
-      pill.className=`mode-pill ${isStudyMode?'study':''}`;
-      pill.innerText=isStudyMode?"📚 Study Mode":"History";
-      if(data.chat.messages?.length>0) data.chat.messages.forEach(m=>addMessage(m.role,m.content));
-      if(data.chat.studyData?.length>0){
-        buildSidebarDropdown(data.chat.studyData);
-        addMessage('assistant',`✅ Restored **${data.chat.studyData.length} questions** from history.`);
-      }else if(isStudyMode){
-        const last=data.chat.messages?.slice().reverse().find(m=>m.role==='assistant'&&m.content.includes('['));
-        if(last){try{const p=JSON.parse(last.content.replace(/```json|```/g,'').trim());if(Array.isArray(p)&&p.length>0)buildSidebarDropdown(p);}catch(e){}}
-      }
-      if(window.innerWidth<=768) closeSidebar();
-    }catch(err){
-      document.getElementById('messages').innerHTML='';
-      addMessage('assistant','❌ Failed to load this chat.');
-    }
-  }
-
-  /* ===== FILE UPLOAD ===== */
-  function handleMultipleUpload(e){
-    Array.from(e.target.files).forEach(file=>{
-      const reader=new FileReader();
-      reader.onload=ev=>{
-        pendingAttachments.push({type:file.type.startsWith('image/')?'image':'file',data:ev.target.result,name:file.name,mimeType:file.type});
-        updatePreview();
-      };
-      reader.readAsDataURL(file);
-    });
-    e.target.value='';
-  }
-  function updatePreview(){
-    const box=document.getElementById('attachmentPreview');
-    if(pendingAttachments.length===0){box.style.display='none';return;}
-    box.style.display='flex';
-    box.innerHTML=pendingAttachments.map((att,i)=>
-      att.type==='image'
-        ?`<div class="preview-item"><img src="${att.data}"><button class="preview-remove" onclick="removeAtt(${i})">✕</button></div>`
-        :`<div class="preview-item" style="background:var(--bg3);padding:6px 10px;border-radius:8px;font-size:.75rem;color:var(--text);position:relative;">📄 ${att.name}<button class="preview-remove" onclick="removeAtt(${i})">✕</button></div>`
-    ).join('');
-  }
-  function removeAtt(i){pendingAttachments.splice(i,1);updatePreview();}
-
-  /* ===== MESSAGES ===== */
-  function addMessage(role,text,attachments=[]){
-    const container=document.getElementById('messages');
-    const div=document.createElement('div');
-    div.className=`message-wrapper ${role}`;
-    let html='';
-    if(attachments?.length>0){
-      html+='<div class="msg-attachments">';
-      attachments.forEach(att=>{
-        if(att.type==='image') html+=`<img src="${att.data}" class="msg-thumb">`;
-        else html+=`<div class="msg-file-icon">📄 ${att.name}</div>`;
-      });
-      html+='</div>';
-    }
-    if(text) html+=`<div class="message">${role==='assistant'?marked.parse(text):text}</div>`;
-    div.innerHTML=html;
-    container.appendChild(div);
-    setTimeout(()=>container.scrollTop=container.scrollHeight,50);
-  }
-
-  function showSingleAnswer(question,answer){
-    document.getElementById('messages').innerHTML='';
-    activeQuestionContext=question;
-    addMessage('user',question);
-    addMessage('assistant',answer);
-    if(window.innerWidth<=768) closeSidebar();
-  }
-  function showAllAnswers(encodedDataStr){
-    const arr=JSON.parse(decodeURIComponent(encodedDataStr));
-    document.getElementById('messages').innerHTML='';
-    activeQuestionContext="all batch questions";
-    arr.forEach((item,i)=>{addMessage('user',`Q${i+1}: ${item.question}`);addMessage('assistant',item.answer);});
-    if(window.innerWidth<=768) closeSidebar();
-  }
-
-  /* ===== STUDY DROPDOWN ===== */
-  function buildSidebarDropdown(studyDataArray){
-    const container=document.getElementById('activeStudyDropdowns');
-    const empty=container.querySelector('.study-section-empty');
-    if(empty) empty.remove();
-    const groupDiv=document.createElement('div');
-    groupDiv.className='study-group';
-    const uid='study_'+Date.now();
-    const safe=encodeURIComponent(JSON.stringify(studyDataArray));
-    let itemsHtml=studyDataArray.map((item,i)=>{
-      const q=encodeURIComponent(item.question);
-      const a=encodeURIComponent(item.answer);
-      return `<div class="study-q-item" onclick="showSingleAnswer(decodeURIComponent('${q}'),decodeURIComponent('${a}'))">Q${i+1}: ${item.question}</div>`;
-    }).join('');
-    groupDiv.innerHTML=`
-      <div class="study-header-container">
-        <div class="study-header-text" onclick="showAllAnswers('${safe}')">📚 Extracted (${studyDataArray.length})</div>
-        <div class="study-toggle" id="tog_${uid}" onclick="var el=document.getElementById('${uid}');var op=el.classList.toggle('open');document.getElementById('tog_${uid}').textContent=op?'▲':'▼';">▼</div>
-      </div>
-      <div class="study-items" id="${uid}">${itemsHtml}</div>`;
-    container.prepend(groupDiv);
-  }
-
-  /* ===== MCQ QUIZ FEATURE ===== */
-  function startQuizMode(){
-    const input=document.getElementById('userInput');
-    input.value='Mujhe 10 MCQ questions do (topic: rivers of the world ya koi bhi interesting topic). Strictly sirf JSON array return karo, koi extra text nahi:\n[{"q":"Question text?","opts":["Option A","Option B","Option C","Option D"],"ans":0}]\n(ans = correct option ka index, 0-based)';
-    input.focus();
-    // Cursor end mein le jao
-    setTimeout(()=>{ input.setSelectionRange(input.value.length,input.value.length); },10);
-  }
-
-  function renderQuizInChat(arr){
-    quizData=arr;
-    quizAnswered=new Array(arr.length).fill(false);
+    // Answers reset — fresh quiz same questions se
+    quizData=saved.data;
+    quizAnswered=new Array(saved.data.length).fill(false); // RESET answers
     quizCorrect=0;
+    quizPicked=new Array(saved.data.length).fill(-1);      // RESET picks
 
-    const container=document.getElementById('messages');
-    const wrap=document.createElement('div');
-    wrap.className='message-wrapper assistant';
-    wrap.id='quizBlock_'+Date.now();
-    const blockId=wrap.id;
+    // MCQ mode ON rakho
+    mcqModeActive=true;
+    const btn=document.getElementById('mcqHeaderBtn');
+    if(btn){ btn.classList.add('mcq-on'); btn.title='MCQ Mode OFF karo'; }
+    document.getElementById('mcqModeStrip').classList.add('visible');
+    document.getElementById('currentModeInfo').className='mode-pill study';
+    document.getElementById('currentModeInfo').textContent='📝 MCQ Mode';
 
-    const letters=['A','B','C','D'];
+    addMessage('assistant','✅ Pichla quiz restore hua — answers reset hain, fir se try karo!');
+    renderQuizInChat();
+  }catch(e){}
+}
 
-    let html=`<div class="quiz-wrap">`;
-    html+=`<div class="quiz-top-label">📝 MCQ Quiz &nbsp;·&nbsp; <span id="${blockId}_done">0</span> / ${arr.length} answered</div>`;
-    html+=`<div class="quiz-progress-bar"><div class="quiz-progress-fill" id="${blockId}_pf" style="width:0%"></div></div>`;
+/* ========== INPUT HINT ========== */
+function onInputChange(val){
+  const hint=document.getElementById('inputHint');
+  if(!val){ hint.textContent=''; hint.classList.remove('show'); return; }
+  const tips=['💡 Enter dabao ya ➤ bhejo!','🤔 Cypher sochega...','📤 Ready to send?','✨ Interesting sawaal!'];
+  hint.textContent = val.length > 40 ? '📝 Achha sawaal! Bhejo...' : tips[Math.floor(val.length/3)%tips.length];
+  hint.classList.add('show');
+}
 
-    arr.forEach((item,qi)=>{
-      html+=`<div class="quiz-q-card" id="${blockId}_qcard_${qi}">`;
-      html+=`<div class="quiz-q-num">Question ${qi+1} of ${arr.length}</div>`;
-      html+=`<div class="quiz-q-text">${item.q}</div>`;
-      html+=`<div class="quiz-opts">`;
-      item.opts.forEach((opt,oi)=>{
-        html+=`<div class="quiz-opt" id="${blockId}_opt_${qi}_${oi}" onclick="pickQuizAns('${blockId}',${qi},${oi})">
-                 <span class="quiz-opt-letter">${letters[oi]}</span>${escapeHtml(opt)}
-               </div>`;
-      });
-      html+=`</div></div>`;
+/* ========== THEME ========== */
+function setTheme(t){
+  document.documentElement.setAttribute('data-theme',t);
+  localStorage.setItem('cypher-theme',t);
+  document.getElementById('themeLight').classList.toggle('active',t==='light');
+  document.getElementById('themeDark').classList.toggle('active',t==='dark');
+  document.getElementById('settingsPanel').classList.remove('open');
+}
+function toggleSettings(){ document.getElementById('settingsPanel').classList.toggle('open'); }
+document.addEventListener('click',e=>{
+  const sp=document.getElementById('settingsPanel');
+  if(sp.classList.contains('open')&&!sp.contains(e.target)&&!e.target.closest('.settings-btn'))
+    sp.classList.remove('open');
+});
+
+/* ========== CAMERA ========== */
+async function openCamera(){
+  document.getElementById('cameraModal').classList.add('open');
+  currentZoom=1;
+  try{
+    videoStream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment",width:{ideal:1920},height:{ideal:1080}}});
+    document.getElementById('videoElement').srcObject=videoStream;
+    const caps=videoStream.getVideoTracks()[0].getCapabilities?.()??{};
+    if(caps.zoom) maxZoom=caps.zoom.max||4;
+  }catch(e){alert("Camera access denied.");closeCamera();}
+}
+function closeCamera(){
+  document.getElementById('cameraModal').classList.remove('open');
+  if(videoStream) videoStream.getTracks().forEach(t=>t.stop());
+  videoStream=null; currentZoom=1;
+  document.getElementById('videoElement').style.transform='';
+}
+function applyZoom(z){
+  if(!videoStream)return;
+  const track=videoStream.getVideoTracks()[0];
+  const caps=track.getCapabilities?.()??{};
+  if(caps.zoom){currentZoom=Math.min(Math.max(z,1),maxZoom);track.applyConstraints({advanced:[{zoom:currentZoom}]}).catch(()=>{});}
+  else{currentZoom=Math.min(Math.max(z,1),5);document.getElementById('videoElement').style.transform=`scale(${currentZoom})`;document.getElementById('videoElement').style.transformOrigin='center center';}
+}
+function zoomIn(){applyZoom(currentZoom+0.5);}
+function zoomOut(){applyZoom(currentZoom-0.5);}
+function captureImage(){
+  const v=document.getElementById('videoElement'),c=document.getElementById('canvasElement');
+  c.width=v.videoWidth;c.height=v.videoHeight;
+  c.getContext('2d').drawImage(v,0,0,c.width,c.height);
+  closeCamera();
+  processScannedImage(c.toDataURL('image/jpeg',0.85));
+}
+async function processScannedImage(base64Data){
+  const el=document.getElementById('userInput'),orig=el.placeholder;
+  el.value="";el.placeholder="Scanning... ⏳";el.disabled=true;
+  try{
+    const res=await fetch(`${API_BASE_URL}/api/chat/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:"Extract all readable text exactly.",chatId:null,attachments:[{type:'image',data:base64Data,name:'scan.jpg',mimeType:'image/jpeg'}],isStudyMode:false})});
+    const d=await res.json();
+    if(d.success) el.value=d.result.replace(/```/g,'').trim();
+  }catch(e){alert("Server error.");}
+  finally{el.placeholder=orig;el.disabled=false;el.focus();}
+}
+
+/* ========== SIDEBAR ========== */
+function toggleSidebar(){document.getElementById('appSidebar').classList.toggle('open');document.getElementById('sidebarOverlay').classList.toggle('show');}
+function closeSidebar(){document.getElementById('appSidebar').classList.remove('open');document.getElementById('sidebarOverlay').classList.remove('show');}
+
+/* ========== MODE ========== */
+function setMode(study,isFromButton=false){
+  isStudyMode=study; activeQuestionContext=""; currentChatId=null;
+  // MCQ mode bhi reset
+  mcqModeActive=false;
+  document.getElementById('mcqHeaderBtn').classList.remove('mcq-on','loading');
+  document.getElementById('mcqModeStrip').classList.remove('visible');
+  document.getElementById('userInput').placeholder='Ask Cypher anything...';
+  const pill=document.getElementById('currentModeInfo');
+  pill.className=`mode-pill ${study?'study':''}`;
+  pill.innerText=study?'📚 Study Mode':'Normal Mode';
+  document.getElementById('messages').innerHTML='';
+  document.getElementById('activeStudyDropdowns').innerHTML='<div class="study-section-empty">No extractions yet</div>';
+  pendingAttachments=[];updatePreview();
+  if(isFromButton&&window.innerWidth<=768) closeSidebar();
+  study ? addMessage('assistant',"**Study Mode Active** 📚\nUpload images or PDFs to extract and answer questions automatically.") : showWelcome();
+}
+
+function showWelcome(){
+  const msgs=document.getElementById('messages');
+  const h=new Date().getHours();
+  const gr=h<12?"Good morning ☀️":h<17?"Good afternoon 🌤️":"Good evening 🌙";
+  const tips=["Ask me anything — I think, therefore I answer ⚡","Ready to explore ideas with you 🚀","Your AI brain is warmed up 🧠","Curiosity is the engine of achievement 🔥"];
+  const banner=document.createElement('div');
+  banner.className='welcome-banner';
+  banner.innerHTML=`<div class="welcome-logo">Cypher</div><div class="welcome-greeting">${gr}!</div><div class="welcome-sub">${tips[Math.floor(Math.random()*tips.length)]}</div><div class="welcome-tip">📝 Top-right ka <strong>green button</strong> dabao — MCQ Mode ON hoga, phir topic type karke bhejo!</div>`;
+  msgs.appendChild(banner);
+}
+
+/* ========== HISTORY ========== */
+async function loadHistory(){
+  try{
+    const res=await fetch(`${API_BASE_URL}/api/chat/history/all`);
+    const data=await res.json();
+    const chatList=document.getElementById('chatList');
+    chatList.innerHTML='';
+    if(data.success&&data.chats.length>0){
+      const studyChats=data.chats.filter(c=>c.mode==='study');
+      document.getElementById('activeStudyDropdowns').innerHTML='<div class="study-section-empty">No extractions yet</div>';
+      for(const chat of studyChats){
+        const cid=chat._id||chat.chatId;
+        try{const dr=await fetch(`${API_BASE_URL}/api/chat/${cid}`);const dd=await dr.json();if(dd.success&&dd.chat?.studyData?.length>0)buildSidebarDropdown(dd.chat.studyData);}catch(e){}
+      }
+      const norm=data.chats.filter(c=>c.mode!=='study');
+      if(!norm.length){chatList.innerHTML='<div style="padding:6px 8px;font-size:.78rem;color:#4a5568;font-style:italic;">No chats yet</div>';}
+      else{norm.forEach(chat=>{const cid=chat._id||chat.chatId;const el=document.createElement('div');el.className='history-item';el.innerHTML=`<span class="hi-dot"></span>${chat.title||'Conversation'}`;el.onclick=()=>loadOldChat(cid);chatList.appendChild(el);});}
+    }else{chatList.innerHTML='<div style="padding:6px 8px;font-size:.78rem;color:#4a5568;font-style:italic;">No chats yet</div>';}
+  }catch(e){console.error(e);}
+}
+
+async function loadOldChat(chatId){
+  currentChatId=chatId;
+  document.getElementById('messages').innerHTML='';
+  addMessage('assistant','⏳ Loading...');
+  try{
+    const res=await fetch(`${API_BASE_URL}/api/chat/${chatId}`);
+    const data=await res.json();
+    if(!data.success||!data.chat)throw new Error();
+    document.getElementById('messages').innerHTML='';
+    isStudyMode=(data.chat.mode==='study');
+    const pill=document.getElementById('currentModeInfo');
+    pill.className=`mode-pill ${isStudyMode?'study':''}`;
+    pill.innerText=isStudyMode?"📚 Study Mode":"History";
+    if(data.chat.messages?.length>0)data.chat.messages.forEach(m=>addMessage(m.role,m.content));
+    if(data.chat.studyData?.length>0){buildSidebarDropdown(data.chat.studyData);addMessage('assistant',`✅ Restored **${data.chat.studyData.length} questions**.`);}
+    if(window.innerWidth<=768)closeSidebar();
+  }catch(e){document.getElementById('messages').innerHTML='';addMessage('assistant','❌ Failed to load.');}
+}
+
+/* ========== FILE ========== */
+function handleMultipleUpload(e){
+  Array.from(e.target.files).forEach(file=>{
+    const r=new FileReader();
+    r.onload=ev=>{pendingAttachments.push({type:file.type.startsWith('image/')?'image':'file',data:ev.target.result,name:file.name,mimeType:file.type});updatePreview();};
+    r.readAsDataURL(file);
+  });
+  e.target.value='';
+}
+function updatePreview(){
+  const box=document.getElementById('attachmentPreview');
+  if(!pendingAttachments.length){box.style.display='none';return;}
+  box.style.display='flex';
+  box.innerHTML=pendingAttachments.map((a,i)=>a.type==='image'?`<div class="preview-item"><img src="${a.data}"><button class="preview-remove" onclick="removeAtt(${i})">✕</button></div>`:`<div class="preview-item" style="background:var(--bg3);padding:6px 10px;border-radius:8px;font-size:.75rem;color:var(--text);position:relative;">📄 ${a.name}<button class="preview-remove" onclick="removeAtt(${i})">✕</button></div>`).join('');
+}
+function removeAtt(i){pendingAttachments.splice(i,1);updatePreview();}
+
+/* ========== MESSAGES ========== */
+function addMessage(role,text,atts=[]){
+  // Assistant ke JSON quiz response ko raw kabhi mat dikhao — widget banao
+  if(role==='assistant' && text && typeof text==='string' && !atts?.length){
+    const trimmed=text.trim();
+    if(trimmed.startsWith('[')||trimmed.indexOf('[{')>=0){
+      if(tryParseQuiz(text)) return;
+    }
+  }
+  const c=document.getElementById('messages');
+  const d=document.createElement('div');
+  d.className=`message-wrapper ${role}`;
+  let html='';
+  if(atts?.length){html+='<div class="msg-attachments">';atts.forEach(a=>{html+=a.type==='image'?`<img src="${a.data}" class="msg-thumb">`:`<div class="msg-file-icon">📄 ${a.name}</div>`;});html+='</div>';}
+  if(text)html+=`<div class="message">${role==='assistant'?marked.parse(text):text}</div>`;
+  d.innerHTML=html;c.appendChild(d);
+  setTimeout(()=>c.scrollTop=c.scrollHeight,50);
+}
+
+function showSingleAnswer(q,a){document.getElementById('messages').innerHTML='';activeQuestionContext=q;addMessage('user',q);addMessage('assistant',a);if(window.innerWidth<=768)closeSidebar();}
+function showAllAnswers(enc){const arr=JSON.parse(decodeURIComponent(enc));document.getElementById('messages').innerHTML='';activeQuestionContext="all";arr.forEach((x,i)=>{addMessage('user',`Q${i+1}: ${x.question}`);addMessage('assistant',x.answer);});if(window.innerWidth<=768)closeSidebar();}
+
+function buildSidebarDropdown(arr){
+  const c=document.getElementById('activeStudyDropdowns');
+  c.querySelector('.study-section-empty')?.remove();
+  const g=document.createElement('div');g.className='study-group';
+  const uid='s_'+Date.now();
+  const safe=encodeURIComponent(JSON.stringify(arr));
+  g.innerHTML=`<div class="study-header-container"><div class="study-header-text" onclick="showAllAnswers('${safe}')">📚 Extracted (${arr.length})</div><div class="study-toggle" id="t${uid}" onclick="var el=document.getElementById('${uid}');var op=el.classList.toggle('open');document.getElementById('t${uid}').textContent=op?'▲':'▼';">▼</div></div><div class="study-items" id="${uid}">${arr.map((x,i)=>`<div class="study-q-item" onclick="showSingleAnswer(decodeURIComponent('${encodeURIComponent(x.question)}'),decodeURIComponent('${encodeURIComponent(x.answer)}'))">Q${i+1}: ${x.question}</div>`).join('')}</div>`;
+  c.prepend(g);
+}
+
+/* ========== QUIZ HELPERS ========== */
+function escH(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+/* ========== PARSE QUIZ JSON — properly, no raw display ========== */
+function tryParseQuiz(raw){
+  try{
+    let c=raw.replace(/```json/gi,'').replace(/```/g,'').trim();
+    const s=c.indexOf('['); if(s<0) return false;
+    c=c.slice(s);
+    const e=c.lastIndexOf(']'); if(e<0) return false;
+    c=c.slice(0,e+1);
+    const p=JSON.parse(c);
+    if(!Array.isArray(p)||!p.length) return false;
+    if(typeof p[0].q!=='string'||!Array.isArray(p[0].opts)||typeof p[0].ans!=='number') return false;
+    quizData=p;
+    quizAnswered=new Array(p.length).fill(false);
+    quizCorrect=0;
+    quizPicked=new Array(p.length).fill(-1);
+    saveQuizSession();
+    renderQuizInChat();
+    return true;
+  }catch(e){ return false; }
+}
+
+/* ========== RENDER QUIZ ========== */
+function renderQuizInChat(){
+  const arr=quizData;
+  if(!arr||!arr.length) return;
+  const c=document.getElementById('messages');
+  const wrap=document.createElement('div');
+  wrap.className='message-wrapper assistant';
+  const bid='qb_'+Date.now();
+  wrap.id=bid;
+  currentQuizBlockId=bid;
+  const L=['A','B','C','D'];
+
+  let html=`<div class="quiz-wrap">`;
+  html+=`<div class="quiz-top-label">📝 MCQ Quiz <span class="quiz-score-txt" id="${bid}_done">0 / ${arr.length} answered</span></div>`;
+  html+=`<div class="quiz-progress-bar"><div class="quiz-progress-fill" id="${bid}_pf" style="width:0%"></div></div>`;
+  arr.forEach((item,qi)=>{
+    html+=`<div class="quiz-q-card"><div class="quiz-q-num">Question ${qi+1} of ${arr.length}</div><div class="quiz-q-text">${escH(item.q)}</div><div class="quiz-opts">`;
+    item.opts.forEach((o,oi)=>{
+      html+=`<div class="quiz-opt" id="${bid}_o_${qi}_${oi}" onclick="pickAns('${bid}',${qi},${oi})"><span class="quiz-opt-letter">${L[oi]}</span>${escH(o)}</div>`;
     });
+    html+=`</div></div>`;
+  });
+  html+=`<div class="quiz-result-card" id="${bid}_res"><div class="quiz-result-score" id="${bid}_sc"></div><div class="quiz-result-msg" id="${bid}_mg"></div><button class="quiz-retry-btn" onclick="retryQuiz('${bid}')">↺ Nayi Quiz Lo</button></div></div>`;
+  wrap.innerHTML=html;
+  c.appendChild(wrap);
+  setTimeout(()=>c.scrollTop=c.scrollHeight,80);
+}
 
-    html+=`<div class="quiz-result-card" id="${blockId}_result">
-      <div class="quiz-result-score" id="${blockId}_rscore"></div>
-      <div class="quiz-result-msg" id="${blockId}_rmsg"></div>
-      <button class="quiz-retry-btn" onclick="retryQuiz('${blockId}')">↺ Retry Quiz</button>
-    </div>`;
-    html+=`</div>`;
+function pickAns(bid,qi,oi){
+  if(quizAnswered[qi]) return;
+  quizAnswered[qi]=true;
+  quizPicked[qi]=oi;
+  const q=quizData[qi];
+  for(let i=0;i<q.opts.length;i++){
+    const el=document.getElementById(`${bid}_o_${qi}_${i}`);
+    if(el) el.classList.add('locked');
+  }
+  const chosen=document.getElementById(`${bid}_o_${qi}_${oi}`);
+  const correct=document.getElementById(`${bid}_o_${qi}_${q.ans}`);
+  if(oi===q.ans){
+    chosen.classList.add('correct');
+    chosen.querySelector('.quiz-opt-letter').textContent='✓';
+    quizCorrect++;
+  }else{
+    chosen.classList.add('wrong');
+    chosen.querySelector('.quiz-opt-letter').textContent='✗';
+    if(correct){correct.classList.add('correct');correct.querySelector('.quiz-opt-letter').textContent='✓';}
+  }
+  const done=quizAnswered.filter(Boolean).length;
+  const pct=Math.round((done/quizData.length)*100);
+  const de=document.getElementById(`${bid}_done`); if(de) de.textContent=`${done} / ${quizData.length} answered`;
+  const pe=document.getElementById(`${bid}_pf`); if(pe) pe.style.width=pct+'%';
 
-    wrap.innerHTML=html;
-    container.appendChild(wrap);
-    setTimeout(()=>container.scrollTop=container.scrollHeight,80);
+  saveQuizSession();
+
+  if(done===quizData.length){
+    const res=document.getElementById(`${bid}_res`),sc=document.getElementById(`${bid}_sc`),mg=document.getElementById(`${bid}_mg`);
+    if(res&&sc&&mg){
+      res.style.display='block';
+      sc.textContent=`${quizCorrect} / ${quizData.length} Correct`;
+      const p=Math.round((quizCorrect/quizData.length)*100);
+      mg.textContent=(p===100?'🏆 Perfect! Outstanding!':p>=80?'🌟 Great job!':p>=60?'👍 Good effort!':p>=40?'📖 Keep practicing!':'💪 Try again!')+` (${p}%)`;
+      setTimeout(()=>res.scrollIntoView({behavior:'smooth',block:'center'}),100);
+      clearQuizSession(); // completed — clear
+      mcqModeActive=false;
+      const btn=document.getElementById('mcqHeaderBtn');
+      if(btn){btn.classList.remove('mcq-on');btn.title='MCQ Mode ON karo';}
+      document.getElementById('mcqModeStrip').classList.remove('visible');
+      document.getElementById('currentModeInfo').className='mode-pill';
+      document.getElementById('currentModeInfo').textContent='Normal Mode';
+      document.getElementById('userInput').placeholder='Ask Cypher anything...';
+    }
+  }
+}
+
+function retryQuiz(bid){
+  // Same questions, answers reset
+  quizAnswered=new Array(quizData.length).fill(false);
+  quizCorrect=0;
+  quizPicked=new Array(quizData.length).fill(-1);
+  document.getElementById(bid)?.remove();
+  currentQuizBlockId=null;
+  saveQuizSession();
+  renderQuizInChat();
+}
+
+/* ========== SEND MESSAGE ========== */
+async function sendMessage(){
+  const input=document.getElementById('userInput');
+  const text=input.value.trim();
+  if(!text&&!pendingAttachments.length) return;
+
+  if(!currentChatId){
+    try{
+      const r=await fetch(`${API_BASE_URL}/api/chat/create`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:text?text.substring(0,22)+'...':'New Upload',mode:isStudyMode?'study':'gemini-pro'})});
+      const d=await r.json();
+      if(d.success) currentChatId=d.chatId;
+    }catch(e){}
   }
 
-  function pickQuizAns(blockId,qi,oi){
-    if(quizAnswered[qi]) return;
-    quizAnswered[qi]=true;
-    const q=quizData[qi];
-    const letters=['A','B','C','D'];
+  const atts=[...pendingAttachments];
+  let q=text;
+  if(activeQuestionContext&&!pendingAttachments.length&&text)
+    q=`[Regarding: "${activeQuestionContext}"]\nUser asks: ${text}`;
 
-    // Lock all options in this question
-    for(let i=0;i<q.opts.length;i++){
-      const el=document.getElementById(`${blockId}_opt_${qi}_${i}`);
-      if(el) el.classList.add('locked');
+  document.querySelector('.welcome-banner')?.remove();
+  addMessage('user',text||"Sent files.",atts);
+  input.value='';
+  pendingAttachments=[];updatePreview();onInputChange('');
+
+  // Agar MCQ mode ON hai toh quiz generate karo
+  if(mcqModeActive){
+    await generateMCQFromMessage(text);
+    return;
+  }
+
+  const lid='ld_'+Date.now();
+  document.getElementById('messages').insertAdjacentHTML('beforeend',`<div id="${lid}" class="message-wrapper assistant"><div class="message">⏳ Thinking...</div></div>`);
+  document.getElementById('messages').scrollTop=99999;
+
+  try{
+    const res=await fetch(`${API_BASE_URL}/api/chat/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:q,chatId:currentChatId,attachments:atts,isStudyMode})});
+    const data=await res.json();
+    document.getElementById(lid)?.remove();
+    if(data.success){
+      if(data.isStudyMode&&data.studyData?.length>0){
+        addMessage('assistant',`✅ **Extracted ${data.studyData.length} questions!**\nView them in the sidebar 📚`);
+        buildSidebarDropdown(data.studyData);
+        if(window.innerWidth<=768)closeSidebar();
+      }else{
+        // Pehle quiz parse try karo, nahi toh normal message show karo
+        if(!tryParseQuiz(data.result)) addMessage('assistant',data.result);
+      }
+      loadHistory();
     }
+  }catch(e){document.getElementById(lid)?.remove();addMessage('assistant','⚠️ Error connecting to server.');}
+}
 
-    // Show correct / wrong
-    const chosenEl=document.getElementById(`${blockId}_opt_${qi}_${oi}`);
-    const correctEl=document.getElementById(`${blockId}_opt_${qi}_${q.ans}`);
+/* ========== MCQ GENERATE FROM USER MESSAGE ========== */
+async function generateMCQFromMessage(userText){
+  const btn=document.getElementById('mcqHeaderBtn');
+  btn.classList.add('loading');
 
-    if(oi===q.ans){
-      chosenEl.classList.add('correct');
-      chosenEl.querySelector('.quiz-opt-letter').textContent='✓';
-      quizCorrect++;
+  const lid='ld_'+Date.now();
+  document.getElementById('messages').insertAdjacentHTML('beforeend',`<div id="${lid}" class="message-wrapper assistant"><div class="message">⏳ Quiz bana raha hun...</div></div>`);
+  document.getElementById('messages').scrollTop=99999;
+
+  // User ki message se number extract karo — "5 history" → 5, "10 mcq river" → 10, default 10
+  const numMatch = userText.match(/\b(\d+)\b/);
+  const count = numMatch ? Math.min(Math.max(parseInt(numMatch[1]),1),20) : 10;
+  // Topic = number hata ke baaki text
+  const topic = userText.replace(/\b\d+\b/,'').replace(/\b(mcq|quiz|question|questions)\b/gi,'').trim() || userText;
+
+  const prompt=`Mujhe EXACTLY ${count} MCQ questions do about: "${topic}".
+SIRF ${count} questions — na zyada na kam.
+SIRF valid JSON array return karo — koi extra text nahi, koi markdown nahi, koi explanation nahi:
+[{"q":"Question?","opts":["A","B","C","D"],"ans":0}]
+(ans = correct option ka 0-based index)`;
+
+  try{
+    const res=await fetch(`${API_BASE_URL}/api/chat/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:prompt,chatId:currentChatId,attachments:[],isStudyMode:false})});
+    const data=await res.json();
+    document.getElementById(lid)?.remove();
+    if(data.success){
+      const ok=tryParseQuiz(data.result);
+      if(!ok) addMessage('assistant','⚠️ Quiz generate nahi ho saka. Dobara try karo!');
+      // MCQ mode strip raho — quiz interact karne ke baad auto-off hoga
     }else{
-      chosenEl.classList.add('wrong');
-      chosenEl.querySelector('.quiz-opt-letter').textContent='✗';
-      if(correctEl){
-        correctEl.classList.add('correct');
-        correctEl.querySelector('.quiz-opt-letter').textContent='✓';
-      }
+      addMessage('assistant','⚠️ Server error. Dobara try karo!');
     }
-
-    // Update progress
-    const done=quizAnswered.filter(Boolean).length;
-    const pct=Math.round((done/quizData.length)*100);
-    const doneEl=document.getElementById(`${blockId}_done`);
-    const pfEl=document.getElementById(`${blockId}_pf`);
-    if(doneEl) doneEl.textContent=done;
-    if(pfEl) pfEl.style.width=pct+'%';
-
-    // Show result if all done
-    if(done===quizData.length){
-      const resultEl=document.getElementById(`${blockId}_result`);
-      const scoreEl=document.getElementById(`${blockId}_rscore`);
-      const msgEl=document.getElementById(`${blockId}_rmsg`);
-      if(resultEl&&scoreEl&&msgEl){
-        resultEl.style.display='block';
-        scoreEl.textContent=`${quizCorrect} / ${quizData.length} Correct`;
-        const p=Math.round((quizCorrect/quizData.length)*100);
-        let msg='';
-        if(p===100) msg='🏆 Perfect score! Outstanding!';
-        else if(p>=80) msg='🌟 Great job! Almost there!';
-        else if(p>=60) msg='👍 Good effort! Keep going!';
-        else if(p>=40) msg='📖 Keep practicing!';
-        else msg='💪 Don\'t give up, try again!';
-        msgEl.textContent=`${msg} (${p}%)`;
-        setTimeout(()=>resultEl.scrollIntoView({behavior:'smooth',block:'center'}),100);
-      }
-    }
-  }
-
-  function retryQuiz(blockId){
-    const block=document.getElementById(blockId);
-    if(block) block.remove();
-    renderQuizInChat(quizData);
-  }
-
-  function escapeHtml(str){
-    return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
-
-  // Try to detect quiz JSON from AI response
-  function tryRenderQuiz(rawText){
-    try{
-      let clean=rawText.replace(/```json/gi,'').replace(/```/g,'').trim();
-      // Find first '['
-      const start=clean.indexOf('[');
-      if(start<0) return false;
-      clean=clean.slice(start);
-      // Find matching ']'
-      const end=clean.lastIndexOf(']');
-      if(end<0) return false;
-      clean=clean.slice(0,end+1);
-      const parsed=JSON.parse(clean);
-      if(!Array.isArray(parsed)||parsed.length===0) return false;
-      const first=parsed[0];
-      // Must have q, opts (array), ans (number)
-      if(typeof first.q!=='string'||!Array.isArray(first.opts)||typeof first.ans!=='number') return false;
-      renderQuizInChat(parsed);
-      return true;
-    }catch(e){
-      return false;
-    }
-  }
-
-  /* ===== SEND ===== */
-  async function sendMessage(){
-    const input=document.getElementById('userInput');
-    const text=input.value.trim();
-    if(!text&&pendingAttachments.length===0) return;
-
-    if(!currentChatId){
-      try{
-        const r=await fetch(`${API_BASE_URL}/api/chat/create`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({title:text?text.substring(0,22)+"...":"New Upload",mode:isStudyMode?"study":"gemini-pro"})});
-        const d=await r.json();
-        if(d.success) currentChatId=d.chatId;
-      }catch(e){}
-    }
-
-    const attToSend=[...pendingAttachments];
-    let queryToSend=text;
-    if(activeQuestionContext&&pendingAttachments.length===0&&text){
-      queryToSend=`[Regarding: "${activeQuestionContext}"]\nUser asks: ${text}`;
-    }
-
-    // Remove welcome banner
-    document.querySelector('.welcome-banner')?.remove();
-
-    addMessage('user',text||"Sent files.",attToSend);
-    input.value=''; pendingAttachments=[]; updatePreview();
-
-    const lid='ld_'+Date.now();
-    document.getElementById('messages').insertAdjacentHTML('beforeend',`<div id="${lid}" class="message-wrapper assistant"><div class="message">⏳ Thinking...</div></div>`);
-    document.getElementById('messages').scrollTop=99999;
-
-    try{
-      const res=await fetch(`${API_BASE_URL}/api/chat/search`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({query:queryToSend,chatId:currentChatId,attachments:attToSend,isStudyMode})});
-      const data=await res.json();
-      document.getElementById(lid)?.remove();
-
-      if(data.success){
-        if(data.isStudyMode&&data.studyData?.length>0){
-          addMessage('assistant',`✅ **Extracted ${data.studyData.length} questions!**\nView them in the sidebar 📚`);
-          buildSidebarDropdown(data.studyData);
-          if(window.innerWidth<=768) closeSidebar();
-        }else{
-          // ===== TRY QUIZ DETECT =====
-          const isQuiz=tryRenderQuiz(data.result);
-          if(!isQuiz){
-            addMessage('assistant',data.result);
-          }
-          // if isQuiz=true, renderQuizInChat already called, no text message needed
-        }
-        loadHistory();
-      }
-    }catch(err){
-      document.getElementById(lid)?.remove();
-      addMessage('assistant',"⚠️ Error connecting to server. Please try again.");
-    }
-  }
-
-  /* ===== INIT ===== */
-  window.onload=()=>{
-    const saved=localStorage.getItem('cypher-theme')||'light';
-    setTheme(saved);
-    setMode(false,false);
     loadHistory();
-  };
+  }catch(e){
+    document.getElementById(lid)?.remove();
+    addMessage('assistant','⚠️ Server se connect nahi ho saka.');
+  }finally{
+    btn.classList.remove('loading');
+  }
+}
+
+/* ========== INIT ========== */
+window.onload=()=>{
+  const saved=localStorage.getItem('cypher-theme')||'dark';
+  setTheme(saved);
+  setMode(false,false);
+  loadHistory();
+  restoreQuizSession(); // Page refresh pe — same questions, answers reset
+};
 </script>
 </body>
 </html>
